@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # Main application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: maldives-hub-app
+    ports:
+      - "3000:3000"
+    environment:
+      # Supabase Configuration
+      VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+      VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+      
+      # OAuth Configuration
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+      
+      # API Configuration
+      VITE_GEOAPIFY_API_KEY: ${VITE_GEOAPIFY_API_KEY}
+      VITE_FIXER_API_KEY: ${VITE_FIXER_API_KEY}
+      
+      # Runtime Configuration
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+      VITE_MODE: ${VITE_MODE:-production}
+      VITE_LOG_LEVEL: ${VITE_LOG_LEVEL:-error}
+      
+      # Node Environment
+      NODE_ENV: production
+    
+    restart: always
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    networks:
+      - maldives-network
+
+  # Nginx reverse proxy (optional, use if managing SSL)
+  nginx:
+    image: nginx:alpine
+    container_name: maldives-hub-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+      - ./nginx-logs:/var/log/nginx
+    depends_on:
+      - app
+    restart: always
+    networks:
+      - maldives-network
+
+networks:
+  maldives-network:
+    driver: bridge
+
+# Volume for persistent logs
+volumes:
+  nginx-logs:
+    driver: local

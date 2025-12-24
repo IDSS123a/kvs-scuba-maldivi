@@ -1,0 +1,8 @@
+{
+  "name": "KVS-SCUBA-Maldivi",
+  "description": "A premium private web app for the KVS SCUBA Maldives 2026 trip. Featuring real-time itinerary, countdown, group management, and a deep-sea ocean aesthetic.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}

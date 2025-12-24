@@ -1,0 +1,41 @@
+{
+  "name": "kvs-scuba-maldivi",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "tsc --noEmit",
+    "type-check": "tsc --noEmit --skipLibCheck",
+    "build:prod": "vite build --minify terser",
+    "analyze": "vite build --minify terser --ssr",
+    "serve": "npx serve -s dist -l 3000",
+    "predeploy": "npm run build",
+    "deploy": "npm run build && echo 'Build complete. Ready to deploy dist/ folder'"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@google/genai": "^1.34.0",
+    "@supabase/supabase-js": "^2.38.0",
+    "i18next": "^25.7.3",
+    "lucide-react": "^0.562.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-i18next": "^16.5.0",
+    "recharts": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.1",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

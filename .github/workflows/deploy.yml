@@ -1,0 +1,114 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x]
+    
+    steps:
+      # Checkout code
+      - uses: actions/checkout@v3
+      
+      # Setup Node.js
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      # Install dependencies
+      - name: Install dependencies
+        run: npm ci
+      
+      # Lint TypeScript
+      - name: Lint TypeScript
+        run: npm run lint
+      
+      # Build production bundle
+      - name: Build production bundle
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+      
+      # Check bundle size
+      - name: Check bundle size
+        run: |
+          SIZE=$(du -sh dist/ | cut -f1)
+          echo "Build size: $SIZE"
+          if [ $(du -sk dist/ | cut -f1) -gt 1048576 ]; then
+            echo "⚠️ Warning: Bundle size > 1GB"
+          fi
+      
+      # Upload build artifact
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
+          retention-days: 5
+  
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      # Download build artifact
+      - name: Download build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+      
+      # Deploy to server via SSH
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script: |
+            # Navigate to app directory
+            cd ~/apps/maldives-hub
+            
+            # Pull latest changes
+            git pull origin main
+            
+            # Install dependencies
+            npm ci
+            
+            # Build
+            npm run build
+            
+            # Restart Docker container
+            docker-compose down
+            docker-compose up -d
+            
+            # Verify deployment
+            sleep 5
+            curl -f http://localhost:3000 || exit 1
+            
+            echo "✅ Deployment successful"
+      
+      # Send Slack notification
+      - name: Slack Notification
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Deployment to production: ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author
