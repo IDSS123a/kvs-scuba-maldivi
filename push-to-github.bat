@@ -14,15 +14,15 @@ echo.
 echo ========================================
 echo Step 2: Configure User Information
 echo ========================================
-git config user.name "mulalicprivate73"
-git config user.email "mulalicprivate73@gmail.com"
+git config user.name "IDSS123a"
+git config user.email "idsssarajevo@gmail.com"
 
 echo.
 echo ========================================
 echo Step 3: Set Remote Origin
 echo ========================================
 git remote remove origin
-git remote add origin https://github.com/mulalicprivate73-blip/kvs-scuba-maldivi.git
+git remote add origin https://github.com/IDSS123a/kvs-scuba-maldivi.git
 
 echo.
 echo ========================================
@@ -54,6 +54,6 @@ echo Step 8: Verify Push
 echo ========================================
 git log --oneline -5
 echo.
-echo Push complete! Check https://github.com/mulalicprivate73-blip/kvs-scuba-maldivi
+echo Push complete! Check https://github.com/IDSS123a/kvs-scuba-maldivi
 echo.
 pause
