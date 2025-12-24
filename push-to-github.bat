@@ -14,14 +14,15 @@ echo.
 echo ========================================
 echo Step 2: Configure User Information
 echo ========================================
-git config user.name "PromptHeroStudio"
-git config user.email "studio@prompthero.io"
+git config user.name "mulalicprivate73"
+git config user.email "mulalicprivate73@gmail.com"
 
 echo.
 echo ========================================
-echo Step 3: Add Remote Origin
+echo Step 3: Set Remote Origin
 echo ========================================
-git remote add origin https://github.com/PromptHeroStudio/kvs-scuba-maldivi.git
+git remote remove origin
+git remote add origin https://github.com/mulalicprivate73-blip/kvs-scuba-maldivi.git
 
 echo.
 echo ========================================
@@ -53,6 +54,6 @@ echo Step 8: Verify Push
 echo ========================================
 git log --oneline -5
 echo.
-echo Push complete! Check https://github.com/PromptHeroStudio/kvs-scuba-maldivi
+echo Push complete! Check https://github.com/mulalicprivate73-blip/kvs-scuba-maldivi
 echo.
 pause
