@@ -74,7 +74,10 @@ INSERT INTO public.users (
 ('Dijete 1', 'dijete1@tempmail.com', NULL, NULL, '71000 Sarajevo', 'Bosna i Hercegovina', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending', 'member', '161616', NOW(), NOW()),
 ('Dijete 2', 'dijete2@tempmail.com', NULL, NULL, '71000 Sarajevo', 'Bosna i Hercegovina', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending', 'member', '171717', NOW(), NOW()),
 ('Dijete 3', 'dijete3@tempmail.com', NULL, NULL, '71000 Sarajevo', 'Bosna i Hercegovina', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending', 'member', '181818', NOW(), NOW()),
-('Dijete 4', 'dijete4@tempmail.com', NULL, NULL, '71000 Sarajevo', 'Bosna i Hercegovina', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending', 'member', '191919', NOW(), NOW())
+('Dijete 4', 'dijete4@tempmail.com', NULL, NULL, '71000 Sarajevo', 'Bosna i Hercegovina', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending', 'member', '191919', NOW(), NOW()),
+
+-- Jasmina Catic
+('Jasmina Catic', 'jasmina.catic7@gmail.com', '+387061324599', 'Mocila 28', '71240 Hadzici', 'Bosna i Hercegovina', '03.06.1972', 53, 28, 2024, '4328289', NULL, 'https://my.divessi.com/data/user_files/4/3/2/8/2/8/9/pic/4328289.png?1766755276', NULL, NULL, NULL, NULL, 'active', 'member', '202020', NOW(), NOW())
 
 ON CONFLICT (email) DO UPDATE SET
   phone = EXCLUDED.phone,
