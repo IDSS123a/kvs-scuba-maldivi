@@ -1,6 +1,5 @@
 
 // Native fetch implementation with Dec 2025 model priority
-const DEFAULT_KEY = 'AIzaSyBhbwzrqBIwfEO0UPS0iFkrWyvWAempVo0';
 const PREFERRED_MODELS = [
   'gemini-2.5-flash-lite',
   'gemini-2.5-flash',
@@ -9,7 +8,11 @@ const PREFERRED_MODELS = [
 ];
 
 export async function getDiveTips(topic: string): Promise<string> {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || DEFAULT_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+  if (!apiKey) {
+    return "AI Dive Tips are unavailable. Please configure VITE_GEMINI_API_KEY.";
+  }
 
   for (const model of PREFERRED_MODELS) {
     try {

@@ -196,11 +196,11 @@ Complete deployment instructions:
 **File:** [.env.local](.env.local)
 
 ```dotenv
-GEMINI_API_KEY=AIzaSyDeCLhvAA2F5okSJy-DRPjHLc0G9ABuXMw
+VITE_GEMINI_API_KEY=your-gemini-api-key
 VITE_SUPABASE_URL=https://wgghitqmclpttslzffge.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
-VITE_FIXER_API_KEY=6503da937889a55d200cf7f5203fc96f
-VITE_GEOAPIFY_API_KEY=3ada0be236ef49948f16238fed3ef782
+VITE_FIXER_API_KEY=your-fixer-api-key
+VITE_GEOAPIFY_API_KEY=your-geoapify-api-key
 VITE_USE_SUPABASE=true                    # ← Enable this!
 ```
 
@@ -318,7 +318,7 @@ Gallery          → fetchGalleryImages(), uploadGalleryImage()
 - ✅ Development server compiles without errors
 - ✅ Production build succeeds
 - ✅ Environment variables properly typed
-- ✅ Feature flag implemented and documented
+-   AI Features: Partially implemented (requires VITE_GEMINI_API_KEY)
 - ✅ Fallback mechanisms in place
 - ✅ Caching strategy implemented
 - ✅ Error handling comprehensive

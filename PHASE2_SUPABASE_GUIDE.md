@@ -123,11 +123,11 @@ async function importDiversFromCSV(csvFile: File) {
 ### 3.1 Update .env.local
 Add the feature flag to enable Supabase:
 ```dotenv
-GEMINI_API_KEY=AIzaSyDeCLhvAA2F5okSJy-DRPjHLc0G9ABuXMw
+VITE_GEMINI_API_KEY=your-gemini-api-key
 VITE_SUPABASE_URL=https://wgghitqmclpttslzffge.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnZ2hpdHFtY2xwdHRzbHpmZmdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzODQyODAsImV4cCI6MjA4MTk2MDI4MH0.xCrfueinWPNtElzeOcpyx7d9erALdLC7Cd4bRTyYlGg
-VITE_FIXER_API_KEY=6503da937889a55d200cf7f5203fc96f
-VITE_GEOAPIFY_API_KEY=3ada0be236ef49948f16238fed3ef782
+VITE_FIXER_API_KEY=your-fixer-api-key
+VITE_GEOAPIFY_API_KEY=your-geoapify-api-key
 VITE_USE_SUPABASE=true
 ```
 

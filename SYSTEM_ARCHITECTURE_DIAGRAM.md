@@ -752,7 +752,7 @@ ENVIRONMENT VARIABLES
 ──────────
 VITE_SUPABASE_URL=https://[project].supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGc...
-VITE_GOOGLE_GENAI_KEY=AIzaSy...
+VITE_GOOGLE_GENAI_KEY=your-gemini-api-key
 VITE_APP_NAME=KVS-Scuba Maldives 2026
 VITE_APP_VERSION=1.0.0
 NODE_ENV=development

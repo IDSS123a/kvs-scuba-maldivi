@@ -23,13 +23,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ theme = 'light', lang = 'BS', isAdmin
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const GEMINI_KEYS = [
-    'AIzaSyBhbwzrqBIwfEO0UPS0iFkrWyvWAempVo0',
-    'AIzaSyD6ZioX51GEFMvhwc_G7VgPR1IUnQFoXic',
-    'AIzaSyAIYtVrAmoT7erkS9b43MqBH0tXRhzyQZ0',
-    'AIzaSyC_az1GFPR5PbJxQin4CydoUDTesyKw-Es'
-  ];
-
   const PREFERRED_MODELS = [
     'gemini-2.5-flash-lite',
     'gemini-2.5-flash',
@@ -37,19 +30,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ theme = 'light', lang = 'BS', isAdmin
     'gemini-2.0-flash'
   ];
 
-  const getCurrentKey = () => {
-    const savedIndex = parseInt(localStorage.getItem('gemini_key_index') || '0');
-    return {
-      key: GEMINI_KEYS[savedIndex % GEMINI_KEYS.length],
-      index: savedIndex % GEMINI_KEYS.length
-    };
-  };
-
-  const rotateKey = () => {
-    const { index } = getCurrentKey();
-    const nextIndex = (index + 1) % GEMINI_KEYS.length;
-    localStorage.setItem('gemini_key_index', nextIndex.toString());
-  };
+  const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -65,9 +46,19 @@ const ChatBot: React.FC<ChatBotProps> = ({ theme = 'light', lang = 'BS', isAdmin
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsTyping(true);
 
+    if (!API_KEY) {
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        text: lang === 'BS'
+          ? "AI asistent nije konfigurisan. Molimo unesite VITE_GEMINI_API_KEY u Vercel setingsima."
+          : "AI assistant is not configured. Please add VITE_GEMINI_API_KEY to your environment variables."
+      }]);
+      setIsTyping(false);
+      return;
+    }
+
     const tripContext = ITINERARY.map(item => `Day ${item.day}: ${item.title} at ${item.location || 'various'}. ${item.description}`).join('\n');
-    let keyAttempts = 0;
-    const maxKeyAttempts = GEMINI_KEYS.length;
+    let success = false;
 
     const sysInstruction = `
       Ti si KVS SCUBA AI asistent za ekspediciju na Maldive (5-16. januar 2026).
@@ -98,47 +89,36 @@ const ChatBot: React.FC<ChatBotProps> = ({ theme = 'light', lang = 'BS', isAdmin
       - Budi ljubazan, precizan i koristi ove detalje da WOW-uješ ronioce.
     `;
 
-    let success = false;
+    for (const modelName of PREFERRED_MODELS) {
+      if (success) break;
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              { role: 'user', parts: [{ text: `CONTEXT:\n${sysInstruction}\n\nUSER QUESTION: ${userMessage}` }] }
+            ],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
+          })
+        });
 
-    while (keyAttempts < maxKeyAttempts && !success) {
-      const { key } = getCurrentKey();
+        const data = await response.json();
 
-      for (const modelName of PREFERRED_MODELS) {
-        try {
-          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                { role: 'user', parts: [{ text: `CONTEXT:\n${sysInstruction}\n\nUSER QUESTION: ${userMessage}` }] }
-              ],
-              generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
-            })
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (aiText) {
-              setMessages(prev => [...prev, { role: 'ai', text: aiText }]);
-              success = true;
-              break;
-            }
-          } else {
-            console.warn(`Model ${modelName} failed for key index ${keyAttempts}:`, data.error?.message);
-            if (data.error?.message?.includes('not found') || data.error?.message?.includes('limit: 0')) continue;
-            break;
+        if (response.ok) {
+          const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (aiText) {
+            setMessages(prev => [...prev, { role: 'ai', text: aiText }]);
+            success = true;
           }
-        } catch (e) {
-          console.error(`Fetch error for ${modelName}:`, e);
-          break;
+        } else {
+          console.warn(`Model ${modelName} failed:`, data.error?.message);
+          if (data.error?.message?.includes('not found') || data.error?.message?.includes('limit: 0')) continue;
+          break; // Stop if it's a fatal error (like invalid key)
         }
-      }
-
-      if (!success) {
-        rotateKey();
-        keyAttempts++;
+      } catch (e) {
+        console.error(`Fetch error for ${modelName}:`, e);
+        // Continue to next model if it's a transient fetch error
       }
     }
 

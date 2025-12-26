@@ -3,7 +3,7 @@
  * Provides static map URLs, geocoding, and location-based services
  */
 
-const GEOAPIFY_API_KEY = '3ada0be236ef49948f16238fed3ef782';
+const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || '';
 const GEOAPIFY_BASE_URL = 'https://api.geoapify.com';
 
 // TypeScript interfaces
@@ -197,9 +197,9 @@ export function calculateDistance(
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }

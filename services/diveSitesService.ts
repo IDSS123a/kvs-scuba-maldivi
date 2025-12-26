@@ -3,7 +3,7 @@
  * Fetches dive site data from DiveNumber API with hardcoded fallback
  */
 
-const DIVENUMBER_API_KEY = '1b963527fe228ebea8e82ca12807af71';
+const DIVENUMBER_API_KEY = import.meta.env.VITE_DIVENUMBER_API_KEY || '';
 const DIVENUMBER_BASE_URL = 'https://divenumber.com/api';
 
 // TypeScript interfaces
