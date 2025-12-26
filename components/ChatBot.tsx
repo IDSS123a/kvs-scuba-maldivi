@@ -161,7 +161,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ theme = 'light', lang = 'BS', isAdmin
   };
 
   return (
-    <div className="fixed bottom-24 right-5 z-[100] flex flex-col items-end transition-all duration-300">
+    <div className="fixed bottom-24 right-5 z-[1000] flex flex-col items-end transition-all duration-300">
       {isOpen && (
         <div className={`w-[320px] sm:w-[380px] h-[550px] rounded-[32px] shadow-2xl mb-4 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300 border ${theme === 'dark' ? 'bg-[#001a24] border-white/10' : 'bg-white border-cyan-100'}`}>
           <div className="p-5 bg-gradient-to-r from-cyan-600 to-blue-800 flex items-center justify-between shadow-lg text-white">
@@ -222,7 +222,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ theme = 'light', lang = 'BS', isAdmin
         </div>
       )}
 
-      <button onClick={() => setIsOpen(!isOpen)} className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 transform hover:scale-110 active:scale-90 ${isOpen ? 'bg-white text-cyan-600 rotate-90 border border-cyan-100' : 'bg-gradient-to-br from-cyan-500 to-blue-700 text-white'}`}>
+      <button onClick={() => setIsOpen(!isOpen)} className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 transform hover:scale-110 active:scale-90 border-2 border-white/50 ${isOpen ? 'bg-white text-cyan-600 rotate-90' : 'bg-gradient-to-br from-cyan-500 to-blue-700 text-white'}`}>
         {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
       </button>
     </div>
