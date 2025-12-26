@@ -34,7 +34,7 @@ const UserManagement: React.FC = () => {
         if (data) {
           const mappedUsers: User[] = data.map((u: any) => ({
             id: u.id,
-            name: u.full_name || 'No Name',
+            name: u.name || 'No Name',
             email: u.email || 'No Email',
             status: (u.status as any) || 'active',
             joinDate: u.created_at || new Date().toISOString(),

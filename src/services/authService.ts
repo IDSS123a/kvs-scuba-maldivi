@@ -1,15 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../../services/supabaseClient';
 import { User, Session } from '../types/auth';
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /**
  * Authentication response type
@@ -26,7 +16,6 @@ export interface AuthResponse {
 export interface SignUpData {
   email: string;
   full_name: string;
-  ssi_number: string;
   password?: string;
 }
 
@@ -117,7 +106,7 @@ export async function signInWithGoogle(): Promise<AuthResponse> {
  */
 export async function signUpForAccess(userData: SignUpData): Promise<AuthResponse> {
   try {
-    const { email, full_name, ssi_number, password } = userData;
+    const { email, full_name, password } = userData;
 
     // Generate a temporary password if not provided
     const tempPassword = password || Math.random().toString(36).slice(-12);
@@ -129,7 +118,6 @@ export async function signUpForAccess(userData: SignUpData): Promise<AuthRespons
       options: {
         data: {
           full_name,
-          ssi_number,
         },
       },
     });
@@ -145,15 +133,14 @@ export async function signUpForAccess(userData: SignUpData): Promise<AuthRespons
 
     // Create user profile with role='pending'
     const { error: profileError } = await supabase
-      .from('public.users')
+      .from('users')
       .insert([
         {
           id: authData.user.id,
           email,
-          full_name,
-          ssi_number,
-          role: 'pending',
-          status: 'active',
+          name: full_name,
+          role: 'member',
+          status: 'pending',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -234,7 +221,7 @@ export async function refreshUserData(): Promise<User | null> {
     }
 
     const { data, error } = await supabase
-      .from('public.users')
+      .from('users')
       .select('*')
       .eq('id', session.user.id)
       .single();
@@ -267,29 +254,22 @@ export async function logActivity(
     const session = await getCurrentSession();
     const userId = session?.user?.id;
 
-    const activityLog: ActivityLog = {
-      activity_type,
-      timestamp: new Date().toISOString(),
+    const auditLog = {
+      user_id: userId || null,
+      action: activity_type,
+      details: {
+        timestamp: new Date().toISOString()
+      },
+      ip_address: ip_address || null,
+      user_agent: user_agent || null
     };
 
-    if (userId) {
-      activityLog.user_id = userId;
-    }
-
-    if (ip_address) {
-      activityLog.ip_address = ip_address;
-    }
-
-    if (user_agent) {
-      activityLog.user_agent = user_agent;
-    }
-
     const { error } = await supabase
-      .from('user_activity')
-      .insert([activityLog]);
+      .from('audit_logs')
+      .insert([auditLog]);
 
     if (error) {
-      // Silently ignore - user_activity table is optional
+      console.warn('⚠️ Log activity error:', error.message);
     }
   } catch (err) {
     console.error('Error logging activity:', err);
@@ -309,7 +289,7 @@ export async function getUserRole(): Promise<string | null> {
     }
 
     const { data, error } = await supabase
-      .from('public.users')
+      .from('users')
       .select('role')
       .eq('id', session.user.id)
       .single();

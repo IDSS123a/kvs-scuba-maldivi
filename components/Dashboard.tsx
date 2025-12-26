@@ -77,6 +77,20 @@ const Dashboard: React.FC<Props> = ({ lang, theme }) => {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    console.log('Modal state changed:', modal);
+    // Lock body scroll when modal is open
+    if (modal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [modal]);
+
+
 
   const handleExploreInfo = () => {
     setToast({ message: lang === 'BS' ? '🚀 Ronjenje počinje! Istraži informacije ispod.' : '🚀 Journey started! Explore information below.', show: true });
@@ -86,6 +100,7 @@ const Dashboard: React.FC<Props> = ({ lang, theme }) => {
   };
 
   const openQuickTip = (type: string) => {
+    console.log('openQuickTip called with type:', type);
     let content: ModalContent;
     if (type === 'culture') {
       content = {
@@ -118,7 +133,9 @@ const Dashboard: React.FC<Props> = ({ lang, theme }) => {
         tags: ["Sharks", "Rays", "Corals", "Macro"]
       };
     }
+    console.log('Setting modal content:', content);
     setModal(content);
+    console.log('Modal state should be updated');
   };
 
   const translations = {
@@ -204,7 +221,7 @@ const Dashboard: React.FC<Props> = ({ lang, theme }) => {
       </section>
 
       {/* Quick Action Tiles Section - NEW */}
-      <section className="py-12 px-6 mt-6 md:-mt-10 relative z-20">
+      <section className="py-12 px-6 mt-6 md:-mt-10 relative z-30">
         <div className="w-full mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { id: 'culture', icon: Scale, color: 'bg-amber-500', label: t.culture },
@@ -214,7 +231,7 @@ const Dashboard: React.FC<Props> = ({ lang, theme }) => {
             <button
               key={item.id}
               onClick={() => openQuickTip(item.id)}
-              className={`p-8 rounded-[40px] flex items-center gap-6 shadow-2xl transition-all hover:scale-[1.02] active:scale-95 border ${theme === 'dark' ? 'bg-[#001a24] border-white/10 shadow-black/40' : 'bg-white border-cyan-50 shadow-cyan-900/5'}`}
+              className={`p-8 rounded-[40px] flex items-center gap-6 shadow-2xl transition-all hover:scale-[1.02] active:scale-95 border ${theme === 'dark' ? 'bg-[#001e29] border-white/20 shadow-black/80' : 'bg-white border-cyan-50 shadow-cyan-900/5'}`}
             >
               <div className={`${item.color} p-4 rounded-3xl shadow-lg`}>
                 <item.icon className="w-8 h-8 text-white" />
@@ -319,23 +336,48 @@ const Dashboard: React.FC<Props> = ({ lang, theme }) => {
       </section>
 
 
+
       {/* Modal */}
       {modal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className="w-full max-w-2xl rounded-[60px] bg-[#001219] text-white p-12 md:p-16 relative border border-white/10 shadow-2xl">
-            <button onClick={() => setModal(null)} className="absolute top-8 right-8 p-3 bg-white/5 rounded-full hover:bg-white/10"><X className="w-6 h-6" /></button>
-            <div className="flex flex-col gap-8">
-              <div className="flex items-center gap-6">
-                <div className="p-8 bg-white/5 rounded-[40px]">{modal.icon}</div>
-                <div>
-                  <span className="text-[#ee9b00] font-black text-sm uppercase tracking-widest">{modal.subtitle}</span>
-                  <h3 className="text-4xl font-black mt-2">{modal.title}</h3>
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6 bg-black bg-opacity-80 backdrop-blur-md overflow-y-auto"
+          onClick={() => setModal(null)}
+        >
+          <div
+            className="w-full max-w-2xl bg-gradient-to-br from-[#001e29] to-[#001219] text-white p-8 md:p-12 lg:p-16 rounded-[40px] md:rounded-[60px] border border-white border-opacity-20 shadow-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setModal(null)}
+              className="float-right p-3 bg-white bg-opacity-10 rounded-full hover:bg-opacity-20 transition-all duration-300 mb-4"
+            >
+              <X className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
+            <div className="clear-both flex flex-col gap-6 md:gap-8">
+              <div className="flex items-start gap-4 md:gap-6">
+                <div className="p-6 md:p-8 bg-white bg-opacity-10 rounded-[30px] md:rounded-[40px] shadow-lg flex-shrink-0">
+                  {modal.icon}
+                </div>
+                <div className="flex-1">
+                  <span className="text-[#ee9b00] font-black text-xs md:text-sm uppercase tracking-widest block mb-2">
+                    {modal.subtitle}
+                  </span>
+                  <h3 className="text-2xl md:text-4xl font-black leading-tight">
+                    {modal.title}
+                  </h3>
                 </div>
               </div>
-              <p className="text-xl leading-relaxed text-gray-300">{modal.description}</p>
-              <div className="flex flex-wrap gap-3">
+              <p className="text-base md:text-xl leading-relaxed text-gray-200">
+                {modal.description}
+              </p>
+              <div className="flex flex-wrap gap-2 md:gap-3">
                 {modal.tags.map(tag => (
-                  <span key={tag} className="px-4 py-2 bg-cyan-500/10 text-cyan-400 font-bold text-xs uppercase rounded-full border border-cyan-500/20">{tag}</span>
+                  <span
+                    key={tag}
+                    className="px-3 md:px-4 py-1.5 md:py-2 bg-cyan-500 bg-opacity-20 text-cyan-300 font-bold text-xs uppercase rounded-full border border-cyan-500 border-opacity-30"
+                  >
+                    {tag}
+                  </span>
                 ))}
               </div>
             </div>

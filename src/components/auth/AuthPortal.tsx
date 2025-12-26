@@ -250,8 +250,7 @@ export const AuthPortal: React.FC = () => {
       await signUpForAccess({
         full_name: state.requestForm.fullName,
         email: state.requestForm.email,
-        ssi_number: state.requestForm.ssiNumber,
-        // password is optional in SignUpData, leaving it undefined to trigger temp password generation
+        // password is optional in SignUpData
       });
 
       setState((prev) => ({

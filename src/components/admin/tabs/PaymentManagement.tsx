@@ -38,7 +38,7 @@ const PaymentManagement: React.FC = () => {
           .from('payments')
           .select(`
             *,
-            users:user_id (full_name, email)
+            users:user_id (name, email)
           `)
           .order('created_at', { ascending: false });
 
@@ -50,7 +50,7 @@ const PaymentManagement: React.FC = () => {
         if (data) {
           const mappedPayments: Payment[] = data.map((p: any) => ({
             id: p.id,
-            userName: p.users?.full_name || p.users?.email || 'Unknown',
+            userName: p.users?.name || p.users?.email || 'Unknown',
             amount: p.amount || 0,
             status: (p.status as any) || 'pending',
             date: p.created_at || new Date().toISOString(),

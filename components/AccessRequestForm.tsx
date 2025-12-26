@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
+import { signUpForAccess } from '../src/services/authService';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 
 interface AccessRequestFormProps {
@@ -140,16 +141,12 @@ export const AccessRequestForm: React.FC<AccessRequestFormProps> = ({
         }
       }
 
-      // If no existing user, insert new one
       // Use authService to create both Auth User and Public Profile
       // This handles the Foreign Key requirement (public.users.id -> auth.users.id)
-      const { signUpForAccess } = await import('../src/services/authService');
-
       const result = await signUpForAccess({
         email: normalizedEmail,
         full_name: fullName.trim(),
-        ssi_number: '', // Optional/Not matched in form
-        password: Math.random().toString(36).slice(-12) // Generate random password as they use PIN
+        password: Math.random().toString(36).slice(-12)
       });
 
       if (result.error) {

@@ -6,9 +6,28 @@ const config: Config = {
     './index.tsx',
     './App.tsx',
     './components/**/*.{js,jsx,ts,tsx}',
+    './src/**/*.{js,jsx,ts,tsx}',
   ],
+  darkMode: 'class',
   theme: {
+    // Custom responsive breakpoints for all device types
+    screens: {
+      'xs': '360px',   // Small phones (iPhone SE, Galaxy S8)
+      'sm': '640px',   // Phones landscape / large phones
+      'md': '768px',   // Tablets portrait (iPad Mini)
+      'lg': '1024px',  // Tablets landscape / small laptops
+      'xl': '1280px',  // Desktop / laptops
+      '2xl': '1536px', // Large desktop
+      '3xl': '1920px', // Full HD+ / 4K displays
+    },
     extend: {
+      // Safe area insets for iOS notch/home indicator
+      spacing: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
+      },
       colors: {
         // Deep Sea Color Palette
         primary: {
@@ -88,6 +107,9 @@ const config: Config = {
         'h3': ['2rem', { lineHeight: '1.3', fontWeight: '900', letterSpacing: '-0.01em' }],
         'h4': ['1.5rem', { lineHeight: '1.4', fontWeight: '800', letterSpacing: '0' }],
 
+        // Extra small for mobile labels/badges
+        'xxs': ['0.625rem', { lineHeight: '0.875rem' }], // 10px - very small labels
+
         // GLOBAL FONT SIZE OVERRIDES (Removed to fix mobile responsiveness)
         // 'xs': ['0.875rem', { lineHeight: '1.25rem' }],   // 14px (was 12px)
         // 'sm': ['1rem', { lineHeight: '1.5rem' }],        // 16px (was 14px)
@@ -156,7 +178,6 @@ const config: Config = {
     },
   },
   plugins: [],
-  darkMode: 'class',
 };
 
 export default config;

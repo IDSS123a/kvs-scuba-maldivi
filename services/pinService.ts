@@ -386,7 +386,6 @@ export const rejectUserAccessRequest = async (
       .update({
         status: 'rejected',
         rejected_at: new Date().toISOString(),
-        rejected_by: adminId || null,
         rejection_reason: reason || null
       })
       .eq('id', userId)

@@ -102,3 +102,225 @@
     border-color: var(--theme-border);
   }
 }
+
+/* Modal Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ========================================
+   BROWSER-SPECIFIC FIXES & OPTIMIZATIONS
+   ======================================== */
+
+/* Safari-specific fixes */
+@supports (-webkit-touch-callout: none) {
+
+  /* Fix for 100vh on iOS Safari (address bar issue) */
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+
+  /* Prevent webkit transform glitches */
+  .safari-fix {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+  }
+
+  /* Fix iOS momentum scrolling */
+  .ios-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Firefox scrollbar styling */
+.firefox-scrollbar,
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4B5563 #1F2937;
+}
+
+.dark .firefox-scrollbar,
+.dark * {
+  scrollbar-color: #9CA3AF #001219;
+}
+
+/* Chrome/Edge scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1F2937;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4B5563;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #001219;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #0a9396;
+}
+
+/* Edge-specific fixes */
+@supports (-ms-ime-align: auto) {
+  .edge-fix {
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+  }
+}
+
+/* Remove default input styling across browsers */
+input,
+textarea,
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Fix Chrome autofill background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+  -webkit-text-fill-color: #001219;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #001219 inset;
+  -webkit-text-fill-color: #f8fdff;
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+
+  /* Disable hover effects on touch devices */
+  .hover-desktop:hover {
+    /* Intentionally empty - hover effects disabled on touch devices */
+    /* Add desktop-specific hover styles here if needed */
+  }
+
+  /* Larger touch targets on mobile */
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent double-tap zoom */
+  * {
+    touch-action: manipulation;
+  }
+}
+
+/* Print styles for all browsers */
+@media print {
+  @page {
+    margin: 0.5in;
+    size: auto;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-checklist {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure dark mode doesn't affect printing */
+  * {
+    background: white !important;
+    color: black !important;
+  }
+
+  a[href]:after {
+    content: " (" attr(href) ")";
+  }
+}
+
+/* iOS-specific safe area handling */
+@supports (padding: env(safe-area-inset-top)) {
+  .ios-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .ios-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .ios-safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .ios-safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Performance optimizations */
+.chrome-optimized {
+  contain: content;
+}
+
+.safari-gpu {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.firefox-layer {
+  isolation: isolate;
+}
+
+/* Smooth scrolling for all browsers */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
