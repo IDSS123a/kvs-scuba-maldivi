@@ -78,37 +78,38 @@ export const getCurrentUser = async () => {
 export type Database = {
   public: {
     Tables: {
-      divers: {
+      users: {
         Row: {
           id: string;
+          email: string;
           name: string;
-          email: string | null;
+          role: 'admin' | 'member' | 'pending';
+          status: 'pending' | 'approved' | 'rejected' | 'active' | 'revoked';
+          pin_code: string | null;
+          pin_hash: string | null;
           phone: string | null;
-          birth_date: string | null;
-          age: number | null;
-          total_dives: number;
-          start_year: number | null;
-          is_pro: boolean;
-          photo_url: string | null;
-          dietary_restrictions: string | null;
-          emergency_contact_name: string | null;
-          emergency_contact_relationship: string | null;
-          emergency_contact_phone: string | null;
-          status: 'confirmed' | 'pending' | 'cancelled';
+          ssi_number: string | null;
+          experience_level: string | null;
+          avg_consumption: number | null;
           created_at: string;
           updated_at: string;
+          approved_at: string | null;
+          approved_by: string | null;
+          rejected_at: string | null;
+          rejected_by: string | null;
+          rejection_reason: string | null;
         };
-        Insert: Omit<Database['public']['Tables']['divers']['Row'], 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Database['public']['Tables']['divers']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['users']['Row'], 'created_at' | 'updated_at'>;
+        Update: Partial<Database['public']['Tables']['users']['Insert']>;
       };
       payments: {
         Row: {
           id: string;
-          diver_id: string;
-          amount_eur: number;
-          payment_method: 'agency' | 'cash';
+          user_id: string;
+          amount_to_agency: number;
+          amount_to_adnan: number;
+          status: 'pending' | 'partial' | 'paid' | 'refunded';
           payment_date: string | null;
-          status: 'pending' | 'completed' | 'refunded';
           notes: string | null;
           created_at: string;
           updated_at: string;
@@ -116,36 +117,30 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['payments']['Row'], 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['payments']['Insert']>;
       };
-      gallery: {
+      audit_logs: {
         Row: {
           id: string;
-          diver_id: string | null;
-          title: string | null;
-          description: string | null;
-          image_url: string;
-          category: 'dive' | 'group' | 'meal' | 'fun' | 'other';
-          uploaded_by: string;
+          user_id: string | null;
+          action: string;
+          details: any;
+          ip_address: string | null;
+          user_agent: string | null;
           created_at: string;
-          updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['gallery']['Row'], 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Database['public']['Tables']['gallery']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['audit_logs']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['audit_logs']['Insert']>;
       };
-      itinerary: {
+      checklist_items: {
         Row: {
           id: string;
-          day: number;
-          date: string;
-          title: string;
-          description: string | null;
-          type: string;
-          location: string | null;
-          details: Record<string, unknown>;
+          user_id: string;
+          item_id: string;
+          is_completed: boolean;
+          completed_at: string | null;
           created_at: string;
-          updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['itinerary']['Row'], 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Database['public']['Tables']['itinerary']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['checklist_items']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['checklist_items']['Insert']>;
       };
     };
   };

@@ -54,16 +54,52 @@ const config: Config = {
           mist: '#f8fdff',
           abyss: '#001219',
         },
+        // Semantic Theme Colors
+        theme: {
+          bg: {
+            light: '#f8fdff',
+            dark: '#001219',
+          },
+          text: {
+            light: '#001219',
+            dark: '#f8fdff',
+            muted: {
+              light: '#4b5563', // gray-600
+              dark: '#9ca3af',  // gray-400
+            }
+          },
+          border: {
+            light: '#e5e7eb', // gray-200
+            dark: '#1f2937',  // gray-800
+          },
+          card: {
+            light: '#ffffff',
+            dark: '#001a24',
+          }
+        }
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },
       fontSize: {
-        // Custom sizes for design system
+        // Custom sizes for design system (Existing)
         'h1': ['3.5rem', { lineHeight: '1.1', fontWeight: '900', letterSpacing: '-0.02em' }],
         'h2': ['2.5rem', { lineHeight: '1.2', fontWeight: '900', letterSpacing: '-0.01em' }],
         'h3': ['2rem', { lineHeight: '1.3', fontWeight: '900', letterSpacing: '-0.01em' }],
         'h4': ['1.5rem', { lineHeight: '1.4', fontWeight: '800', letterSpacing: '0' }],
+
+        // GLOBAL FONT SIZE OVERRIDES (Increased readability)
+        'xs': ['0.875rem', { lineHeight: '1.25rem' }],   // 14px (was 12px)
+        'sm': ['1rem', { lineHeight: '1.5rem' }],        // 16px (was 14px)
+        'base': ['1.125rem', { lineHeight: '1.75rem' }], // 18px (was 16px)
+        'lg': ['1.25rem', { lineHeight: '1.75rem' }],    // 20px (was 18px)
+        'xl': ['1.5rem', { lineHeight: '2rem' }],        // 24px (was 20px)
+        '2xl': ['1.875rem', { lineHeight: '2.25rem' }],  // 30px (was 24px)
+        '3xl': ['2.25rem', { lineHeight: '2.5rem' }],    // 36px (was 30px)
+        '4xl': ['3rem', { lineHeight: '1' }],             // 48px (was 36px)
+        '5xl': ['3.75rem', { lineHeight: '1' }],          // 60px (was 48px)
+        '6xl': ['4.5rem', { lineHeight: '1' }],           // 72px (was 60px)
+        '7xl': ['6rem', { lineHeight: '1' }],             // 96px (was 72px)
       },
       borderRadius: {
         // Design system rounded corners

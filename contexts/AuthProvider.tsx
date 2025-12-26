@@ -1,16 +1,23 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
 
+export interface AppUser {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: 'admin' | 'user';
+}
+
 export interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
   userEmail?: string;
   isAdmin: boolean;
   role: 'admin' | 'user' | null;
-  logout: () => Promise<void>;
+  login: (user: AppUser) => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,85 +25,50 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const ADMIN_EMAILS = ['mulalic71@gmail.com', 'adnandrnda@hotmail.com', 'samirso@hotmail.com'];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [role, setRole] = useState<'admin' | 'user' | null>(null);
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
+    // Restore session from localStorage on mount
+    const savedSession = localStorage.getItem('kvs_auth_session');
+    if (savedSession) {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        setError(null);
-        
-        // Check admin status
-        if (currentUser?.email) {
-          const adminStatus = ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
-          setIsAdmin(adminStatus);
-          setRole(adminStatus ? 'admin' : 'user');
-        } else {
-          setIsAdmin(false);
-          setRole(null);
-        }
+        const appUser = JSON.parse(savedSession) as AppUser;
+        setUser(appUser);
+        // Check BOTH database role AND hardcoded list
+        // This allows assigning admin rights via Admin Panel to other users
+        const adminStatus = appUser.role === 'admin' || ADMIN_EMAILS.includes(appUser.email.toLowerCase());
+        setIsAdmin(adminStatus);
+        setRole(appUser.role);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Authentication error';
-        setError(errorMessage);
-        console.error('Auth init error:', errorMessage);
-        setUser(null);
-        setIsAdmin(false);
-        setRole(null);
-      } finally {
-        setIsLoading(false);
+        console.error('[Auth] Failed to restore session:', err);
+        localStorage.removeItem('kvs_auth_session');
       }
-    };
-
-    getInitialSession();
-
-    // Subscribe to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth event:', event, 'User:', session?.user?.email);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        setError(null);
-        
-        // Check admin status on auth change
-        if (currentUser?.email) {
-          const adminStatus = ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
-          setIsAdmin(adminStatus);
-          setRole(adminStatus ? 'admin' : 'user');
-        } else {
-          setIsAdmin(false);
-          setRole(null);
-        }
-      }
-    );
-
-    return () => {
-      subscription?.unsubscribe();
-    };
+    }
+    setIsLoading(false);
   }, []);
 
-  const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-      setIsAdmin(false);
-      setRole(null);
-      setError(null);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Logout failed';
-      setError(errorMessage);
-      console.error('Logout error:', errorMessage);
-      throw err;
-    }
+  const login = (appUser: AppUser) => {
+    console.log(`[Auth] PIN login successful for ${appUser.displayName}`);
+    setUser(appUser);
+    // Use role from DB as primary source of truth, fallback to hardcoded list
+    const adminStatus = appUser.role === 'admin' || ADMIN_EMAILS.includes(appUser.email.toLowerCase());
+    setIsAdmin(adminStatus);
+    setRole(appUser.role);
+    localStorage.setItem('kvs_auth_session', JSON.stringify(appUser));
+  };
+
+  const logout = () => {
+    console.log('[Auth] User logged out');
+    setUser(null);
+    setIsAdmin(false);
+    setRole(null);
+    setError(null);
+    localStorage.removeItem('kvs_auth_session');
+    localStorage.removeItem('kvs_admin_unlocked');
   };
 
   const value: AuthContextType = {
@@ -107,6 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userEmail: user?.email,
     isAdmin,
     role,
+    login,
     logout,
   };
 

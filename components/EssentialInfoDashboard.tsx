@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Globe, 
-  DollarSign, 
-  Moon, 
-  MapPin, 
+import {
+  Globe,
+  DollarSign,
+  Moon,
+  MapPin,
   AlertCircle,
   Loader2,
   MessageCircle
@@ -42,7 +42,7 @@ const EssentialInfoDashboard: React.FC = () => {
     // Get language from localStorage or default
     const savedLang = localStorage.getItem('language') as 'bs' | 'en' | null;
     const savedKVSLang = localStorage.getItem('kvs_lang') as 'BS' | 'EN' | null;
-    
+
     if (savedKVSLang === 'BS') {
       setLanguage('bs');
     } else if (savedKVSLang === 'EN') {
@@ -58,7 +58,7 @@ const EssentialInfoDashboard: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Fetch country info
         const countryRes = await fetch('https://restcountries.com/v3.1/alpha/mdv');
@@ -196,15 +196,15 @@ const EssentialInfoDashboard: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-12">
+    <div className="w-full mx-auto px-6 py-12 space-y-12">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-black mb-4 flex items-center justify-center gap-4">
           <Globe className="w-10 h-10 text-cyan-600 dark:text-cyan-400" />
           {t.title}
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          {language === 'bs' 
-            ? 'Sve što trebate znati prije nego što stignete na Maldive' 
+          {language === 'bs'
+            ? 'Sve što trebate znati prije nego što stignete na Maldive'
             : 'Everything you need to know before you arrive in the Maldives'}
         </p>
       </div>
@@ -226,8 +226,8 @@ const EssentialInfoDashboard: React.FC = () => {
             {country && (
               <>
                 <div className="flex items-start gap-6">
-                  <img 
-                    src={country.flag} 
+                  <img
+                    src={country.flag}
                     alt="Maldives Flag"
                     className="w-24 h-16 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-600"
                   />
@@ -238,12 +238,12 @@ const EssentialInfoDashboard: React.FC = () => {
                     <p><strong>{t.calling}:</strong> {country.callingCode}</p>
                   </div>
                 </div>
-                
+
                 {/* Practical Info */}
                 <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg space-y-3">
                   <h3 className="font-bold text-lg">{t.electrical}</h3>
                   <p className="text-sm">
-                    <strong>Voltage:</strong> {t.voltage}<br/>
+                    <strong>Voltage:</strong> {t.voltage}<br />
                     <strong>{t.sockets}</strong>
                   </p>
                 </div>
@@ -251,7 +251,7 @@ const EssentialInfoDashboard: React.FC = () => {
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg space-y-3 border border-blue-200 dark:border-blue-800">
                   <h3 className="font-bold text-lg text-blue-900 dark:text-blue-300">{t.visa}</h3>
                   <p className="text-sm text-blue-800 dark:text-blue-200">
-                    ✓ {t.visaRequired}<br/>
+                    ✓ {t.visaRequired}<br />
                     <small>{t.visaNote}</small>
                   </p>
                 </div>
@@ -259,7 +259,7 @@ const EssentialInfoDashboard: React.FC = () => {
                 <div className="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-lg space-y-3 border border-amber-200 dark:border-amber-800">
                   <h3 className="font-bold text-lg text-amber-900 dark:text-amber-300">{t.tipping}</h3>
                   <p className="text-sm text-amber-800 dark:text-amber-200">
-                    • {t.tippingNote}<br/>
+                    • {t.tippingNote}<br />
                     • {t.customsNote}
                   </p>
                 </div>
@@ -273,7 +273,7 @@ const EssentialInfoDashboard: React.FC = () => {
           <h2 className="text-2xl font-black mb-8 flex items-center gap-3">
             <DollarSign className="w-6 h-6 text-emerald-500" /> {t.currency}
           </h2>
-          
+
           {rates && (
             <div className="space-y-6">
               <div className="bg-emerald-50 dark:bg-emerald-900/20 p-6 rounded-lg border border-emerald-200 dark:border-emerald-800">
@@ -299,10 +299,10 @@ const EssentialInfoDashboard: React.FC = () => {
 
               <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-800">
                 <p className="font-bold text-purple-900 dark:text-purple-300 mb-4">💡 {language === 'bs' ? 'Savjet' : 'Tip'}</p>
-                <p className="text-sm text-purple-800 dark:text-purple-200">
+                <p className="text-base text-purple-800 dark:text-purple-200">
                   {language === 'bs'
-                    ? 'Većina mjesta na Maldivima prihvaća USD i kreditne kartice. Novac se može promijeniti na aerodromu ili u hotelima.'
-                    : 'Most places in the Maldives accept USD and credit cards. Money can be exchanged at the airport or at hotels.'}
+                    ? 'Januar/Februar je VRHUNAC vidljivosti (35-40m). Za Mante i Whale Sharkove najbolja je zapadna strana atola (downwind).'
+                    : 'Jan/Feb is PEAK visibility (35-40m). Western sides are best for Mantas and Whale Sharks as they follow plankton downwind.'}
                 </p>
               </div>
             </div>
@@ -318,12 +318,12 @@ const EssentialInfoDashboard: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {prayerTimes.map((pt, i) => (
             <div key={i} className="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-lg border border-amber-200 dark:border-amber-800 text-center">
-              <p className="text-sm font-bold text-amber-900 dark:text-amber-300 mb-2">{pt.name}</p>
+              <p className="text-base font-bold text-amber-900 dark:text-amber-300 mb-2">{pt.name}</p>
               <p className="text-2xl font-black text-amber-600 dark:text-amber-400">{pt.time}</p>
             </div>
           ))}
         </div>
-        <p className="text-xs text-gray-500 mt-6">
+        <p className="text-base text-gray-500 mt-6">
           {language === 'bs'
             ? '📍 Vremena su za Maafushi, Male i bližu okolinu. Mogu varirati prema lokaciji.'
             : '📍 Prayer times are for Maafushi, Malé and nearby areas. May vary by location.'}
@@ -338,12 +338,12 @@ const EssentialInfoDashboard: React.FC = () => {
         <div className="space-y-6">
           <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
             <p className="font-bold text-blue-900 dark:text-blue-300 mb-3">{language === 'bs' ? 'Islam' : 'Islam'}</p>
-            <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
-              {language === 'bs' 
+            <p className="text-base text-blue-800 dark:text-blue-200 mb-3">
+              {language === 'bs'
                 ? 'Maldivi su 99% muslimanski. Svaki grad ima džamiju i poziva se na molitvu pet puta dnevno.'
                 : 'The Maldives is 99% Muslim. Every town has a mosque and the call to prayer (adhan) sounds five times a day.'}
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm text-blue-800 dark:text-blue-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-base text-blue-800 dark:text-blue-200">
               <div>
                 <p className="font-semibold mb-2">📅 Friday</p>
                 <p>{language === 'bs' ? 'Sve javne institucije su zatvorene.' : 'All public institutions are closed.'}</p>
@@ -357,7 +357,7 @@ const EssentialInfoDashboard: React.FC = () => {
 
           <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
             <p className="font-bold text-green-900 dark:text-green-300 mb-3">👥 {language === 'bs' ? 'Ostale Religije' : 'Other Religions'}</p>
-            <p className="text-sm text-green-800 dark:text-green-200">
+            <p className="text-base text-green-800 dark:text-green-200">
               {language === 'bs'
                 ? 'Manjine prakticiraju svoje vjere. Nedjeljska molitve za kršćane dostupne u dogovoru.'
                 : 'Minorities practice their faiths. Sunday services for Christians available by arrangement.'}
@@ -369,10 +369,10 @@ const EssentialInfoDashboard: React.FC = () => {
       {/* Quick Tips Card */}
       <div className="bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 p-10 rounded-[20px] border border-cyan-200 dark:border-cyan-800 shadow-lg">
         <h2 className="text-2xl font-black mb-8 flex items-center gap-3">
-          <AlertCircle className="w-6 h-6 text-cyan-600 dark:text-cyan-400" /> 
+          <AlertCircle className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
           {language === 'bs' ? '✈️ Prije Dolaska' : '✈️ Before You Arrive'}
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-base">
           <ul className="space-y-3">
             <li className="flex gap-3">
               <span className="text-cyan-600 dark:text-cyan-400 font-bold">✓</span>
@@ -404,7 +404,7 @@ const EssentialInfoDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="text-center text-xs text-gray-500 dark:text-gray-400">
+      <div className="text-center text-sm text-gray-500 dark:text-gray-400">
         <p>
           {language === 'bs'
             ? '📌 Informacije su provjeravane i točne do datuma zadnjeg ažuriranja.'

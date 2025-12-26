@@ -1,0 +1,21 @@
+export interface User {
+    id: string;
+    email?: string;
+    full_name?: string;
+    avatar_url?: string;
+    role?: 'admin' | 'member' | 'pending' | 'user';
+    created_at?: string;
+    ssi_number?: string;
+}
+
+export interface Session {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+    token_type: string;
+    user: User;
+}
+
+export interface AuthError {
+    message: string;
+}

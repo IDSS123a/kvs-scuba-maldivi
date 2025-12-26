@@ -61,36 +61,6 @@ export async function sendEmailNotification(payload: EmailPayload): Promise<bool
   }
 }
 
-/**
- * Send attendance confirmation email
- */
-export async function sendAttendanceConfirmationEmail(userEmail: string, userName: string): Promise<boolean> {
-  return sendEmailNotification({
-    to: userEmail,
-    subject: 'Potvrda Dolaska - KVS SCUBA Maldives 2026 | Attendance Confirmation',
-    body: `
-Zdravo ${userName}!
-
-Vaša potvrda dolaska je zabilježena za:
-- 📅 Datum: 24.12.2025.
-- ⏰ Vrijeme: 19:00
-- 📍 Lokacija: Vistafon
-
-Hvala što ste potrdili vašu prisutnost!
-
----
-Hello ${userName}!
-
-Your attendance confirmation has been recorded for:
-- 📅 Date: December 24, 2025
-- ⏰ Time: 19:00
-- 📍 Location: Vistafon
-
-Thank you for confirming your attendance!
-    `,
-    type: 'attendance'
-  });
-}
 
 /**
  * Send trip update email

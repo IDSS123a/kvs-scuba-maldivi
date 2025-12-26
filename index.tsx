@@ -17,3 +17,10 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+// DIAGNOSTICS
+import { testSupabaseConnection } from './services/testConnection';
+// @ts-ignore
+window.testSupabaseConnection = testSupabaseConnection;
+console.log('🔧 DIAGNOSTICS READY: type window.testSupabaseConnection() to run');
+

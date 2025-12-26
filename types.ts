@@ -6,6 +6,7 @@ export enum View {
   GALLERY = 'gallery',
   PREPARATION = 'preparation',
   ESSENTIAL_INFO = 'essential-info',
+  GUIDES = 'guides',
   ADMIN = 'admin'
 }
 
@@ -44,12 +45,17 @@ export interface Diver {
   freedivesFromYear?: number;
   masterId?: string;
   ssiPro?: string;
+  ssiProId?: string; // Add specific field matching DB
   role: 'Adult' | 'Child' | 'Admin';
   photo: string;
   status: 'Confirmed' | 'Pending';
   roommate?: string;
   dietaryRestrictions?: string;
   emergencyContact?: EmergencyContact;
+  isDiver?: boolean;
+  isPro?: boolean;
+  is_pro?: boolean;
+  startYear?: number;
 }
 
 export interface DiveInfo {

@@ -2,16 +2,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ITINERARY, getIcon } from '../constants';
 import { fetchPOIsForMaldivi, fetchDivePOIs } from '../services/overpassService';
-import { 
-  Map as MapIcon, 
-  Waves, 
-  Info, 
-  ExternalLink, 
-  ShieldCheck, 
-  Eye, 
-  Anchor, 
-  ChevronRight, 
-  GraduationCap, 
+import {
+  Map as MapIcon,
+  Waves,
+  Info,
+  ExternalLink,
+  ShieldCheck,
+  Eye,
+  Anchor,
+  ChevronRight,
+  GraduationCap,
   MapPin,
   ChevronDown,
   ArrowRight,
@@ -29,12 +29,18 @@ import {
 } from 'lucide-react';
 import { fetchDiveSitesFromOsm } from '../services/apiService';
 import { fetchDiveSites } from '../services/diveSitesService';
-import { OsmDiveSite } from '../types';
+import { OsmDiveSite, Language, Theme } from '../types';
 import type { DiveSiteDetails } from '../services/diveSitesService';
+import { STRATEGIC_POIS, STRATEGIC_MAP_CONFIG, StrategicPOI } from '../mapConstants';
 
 declare const L: any;
 
-const Itinerary: React.FC = () => {
+interface Props {
+  lang?: Language;
+  theme?: Theme;
+}
+
+const Itinerary: React.FC<Props> = ({ lang = 'BS', theme = 'light' }) => {
   const mapRef = useRef<any | null>(null);
   const layersRef = useRef<{ base: any, marine: any } | null>(null);
   const poiLayersRef = useRef<{ restaurants: any, hotels: any, attractions: any, shops: any }>({
@@ -47,9 +53,20 @@ const Itinerary: React.FC = () => {
   const [osmDiveSites, setOsmDiveSites] = useState<any[]>([]);
   const [loadingMap, setLoadingMap] = useState(true);
   const [marineOverlayActive, setMarineOverlayActive] = useState(false);
-  const [restaurantsVisible, setRestaurantsVisible] = useState(false);
-  const [hotelsVisible, setHotelsVisible] = useState(false);
-  const [attractionsVisible, setAttractionsVisible] = useState(false);
+
+  // Category visibility state
+  const [visibleCategories, setVisibleCategories] = useState<Record<string, boolean>>({
+    dive_sites: true,
+    dive_centers: true,
+    medical_services: true,
+    restaurants_cafes: false,
+    shops_markets: false,
+    finance: false,
+    transport: true
+  });
+
+  const categoryLayersRef = useRef<Record<string, any>>({});
+
   const [diveSitesData, setDiveSitesData] = useState<Map<string, DiveSiteDetails>>(new Map());
   const [loadingDiveSites, setLoadingDiveSites] = useState(true);
 
@@ -59,13 +76,13 @@ const Itinerary: React.FC = () => {
       try {
         const allDiveSites = await fetchDiveSites();
         const sitesMap = new Map<string, DiveSiteDetails>();
-        
+
         allDiveSites.forEach(site => {
           sitesMap.set(site.id, site);
           // Also add by name for compatibility
           sitesMap.set(site.name.toLowerCase().replace(/\s+/g, '-'), site);
         });
-        
+
         setDiveSitesData(sitesMap);
       } catch (error) {
         console.error('Error loading dive sites:', error);
@@ -79,147 +96,128 @@ const Itinerary: React.FC = () => {
 
   useEffect(() => {
     const initMap = async () => {
-      const sites = await fetchDiveSitesFromOsm();
-      setOsmDiveSites(sites);
+      if (typeof L === 'undefined') return;
 
-      // Load POI data - fetch specific categories
-      const pharmacies = await fetchPOIsForMaldivi('pharmacy');
-      const hospitals = await fetchPOIsForMaldivi('hospital');
-      const restaurants = await fetchPOIsForMaldivi('restaurant');
-      const hotels = await fetchPOIsForMaldivi('accommodation');
-      const attractions = await fetchPOIsForMaldivi('attraction');
+      const container = document.getElementById('dive-map');
+      if (!container || mapRef.current) return;
 
-      if (typeof L !== 'undefined') {
-        const container = document.getElementById('dive-map');
-        if (container) {
-          setTimeout(() => {
-            if (!mapRef.current) {
-              const baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              });
+      setTimeout(() => {
+        // Double-check map instance existence inside timeout to prevent strict-mode race conditions
+        if (mapRef.current) return;
 
-              const marineLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
-                attribution: 'Map data: &copy; <a href="http://www.openseamap.org">OpenSeaMap</a> contributors'
-              });
+        const baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        });
 
-              mapRef.current = L.map('dive-map', { 
-                scrollWheelZoom: false,
-                zoomControl: false,
-                layers: [baseLayer]
-              }).setView([3.9446, 73.4891], 11);
+        const marineLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+          attribution: 'Map data: &copy; <a href="http://www.openseamap.org">OpenSeaMap</a> contributors'
+        });
 
-              layersRef.current = { base: baseLayer, marine: marineLayer };
-              L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
+        mapRef.current = L.map('dive-map', {
+          scrollWheelZoom: false,
+          zoomControl: false,
+          layers: [baseLayer]
+        }).setView([STRATEGIC_MAP_CONFIG.initial_center.lat, STRATEGIC_MAP_CONFIG.initial_center.lng], STRATEGIC_MAP_CONFIG.default_zoom);
 
-              // Create POI layers
-              const restaurantsLayer = L.featureGroup();
-              const hotelsLayer = L.featureGroup();
-              const attractionsLayer = L.featureGroup();
-              const pharmaciesLayer = L.featureGroup();
-              const hospitalsLayer = L.featureGroup();
+        layersRef.current = { base: baseLayer, marine: marineLayer };
+        L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
 
-              // Add pharmacy markers
-              pharmacies.forEach(poi => {
-                const icon = L.icon({
-                  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI2VlMzAzMCIvPjwvc3ZnPg==',
-                  iconSize: [24, 24],
-                  iconAnchor: [12, 12]
-                });
-                const marker = L.marker([poi.lat, poi.lon], { icon }).bindPopup(`<b>${poi.name}</b><br>Pharmacy`);
-                pharmaciesLayer.addLayer(marker);
-              });
+        // Define icons and layer groups for each category
+        const categoryIcons: Record<string, string> = {
+          dive_sites: '#0a9396',
+          dive_centers: '#ee9b00',
+          medical_services: '#d32626',
+          restaurants_cafes: '#ff6900',
+          shops_markets: '#9b5de5',
+          finance: '#00bbf9',
+          transport: '#00f5d4'
+        };
 
-              // Add hospital markers
-              hospitals.forEach(poi => {
-                const icon = L.icon({
-                  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI2QzMjYyNiIvPjwvc3ZnPg==',
-                  iconSize: [24, 24],
-                  iconAnchor: [12, 12]
-                });
-                const marker = L.marker([poi.lat, poi.lon], { icon }).bindPopup(`<b>${poi.name}</b><br>Hospital`);
-                hospitalsLayer.addLayer(marker);
-              });
+        STRATEGIC_POIS.forEach(category => {
+          const layerGroup = L.featureGroup();
 
-              // Add restaurant markers
-              restaurants.forEach(poi => {
-                const icon = L.icon({
-                  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI2ZmNjkwMCIvPjwvc3ZnPg==',
-                  iconSize: [24, 24],
-                  iconAnchor: [12, 12]
-                });
-                const marker = L.marker([poi.lat, poi.lon], { icon }).bindPopup(`<b>${poi.name}</b><br>Restaurant`);
-                restaurantsLayer.addLayer(marker);
-              });
+          category.items.forEach(poi => {
+            const color = categoryIcons[category.category_id] || '#64748b';
+            const markerIcon = L.divIcon({
+              className: 'custom-div-icon',
+              html: `<div style="background-color: ${color}; border: 2.5px solid #fff; width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 15px rgba(0,0,0,0.2);"></div>`,
+              iconSize: [16, 16],
+              iconAnchor: [8, 8]
+            });
 
-              // Add hotel markers
-              hotels.forEach(poi => {
-                const icon = L.icon({
-                  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzBhOTM5NiIvPjwvc3ZnPg==',
-                  iconSize: [24, 24],
-                  iconAnchor: [12, 12]
-                });
-                const marker = L.marker([poi.lat, poi.lon], { icon }).bindPopup(`<b>${poi.name}</b><br>Hotel`);
-                hotelsLayer.addLayer(marker);
-              });
-
-              // Add attraction markers
-              attractions.forEach(poi => {
-                const icon = L.icon({
-                  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI2VlOWIwMCIvPjwvc3ZnPg==',
-                  iconSize: [24, 24],
-                  iconAnchor: [12, 12]
-                });
-                const marker = L.marker([poi.lat, poi.lon], { icon }).bindPopup(`<b>${poi.name}</b><br>Attraction`);
-                attractionsLayer.addLayer(marker);
-              });
-
-              poiLayersRef.current = { 
-                restaurants: restaurantsLayer,
-                hotels: hotelsLayer,
-                attractions: attractionsLayer,
-                shops: pharmaciesLayer
-              };
-
-              sites.forEach(site => {
-                const markerIcon = L.divIcon({
-                  className: 'custom-div-icon',
-                  html: `<div style="background-color: #0a9396; border: 2px solid #fff; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.3);"></div>`,
-                  iconSize: [14, 14],
-                  iconAnchor: [7, 7]
-                });
-
-                // Generate dive site details
-                const safetyContext = `Safety First Protocol: Always dive with a buddy and strictly follow the Dive Master's briefing. The Maldives South Malé Atoll is renowned for its strong tidal currents, especially in the channels (kandus). Divers must monitor their air consumption and NDL limits continuously. For this specific site [${site.name}], neutral buoyancy is critical to protect fragile coral structures. All KVS divers must carry a Surface Marker Buoy (SMB) for drift dive scenarios. If you feel tired or cold, signal your buddy and end the dive safely. Respect all marine life: take only pictures, leave only bubbles.`;
+            const popupContent = `
+              <div class="p-5" style="min-width: 320px; font-family: 'Inter', sans-serif;">
+                <div style="display: flex; align-items: center; justify-between; gap: 8px; margin-bottom: 12px;">
+                   <span style="background: ${color}; color: white; font-size: 9px; font-weight: 900; padding: 4px 10px; border-radius: 99px; text-transform: uppercase;">${poi.type.replace('_', ' ')}</span>
+                   ${poi.verified ? '<span style="background: #f0f9fa; color: #005f73; font-size: 9px; font-weight: 900; padding: 4px 10px; border-radius: 99px; text-transform: uppercase;">VERIFIED</span>' : ''}
+                </div>
+                <h4 style="margin: 0 0 10px; font-size: 20px; font-weight: 900; color: #001219; line-height: 1.2;">${poi.name}</h4>
                 
-                const popupContent = `
-                  <div class="p-5" style="min-width: 320px; font-family: 'Inter', sans-serif;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                       <span style="background: #ee9b00; color: white; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 99px; text-transform: uppercase;">VERIFIED OSM DATA</span>
-                       <span style="background: #f0f9fa; color: #005f73; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 99px; text-transform: uppercase;">${site.type.toUpperCase()}</span>
-                    </div>
-                    <h4 style="margin: 0 0 8px; font-size: 20px; font-weight: 900; color: #001219;">${site.name}</h4>
-                    <div style="background: #f8fdff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
-                       <p style="margin: 0; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Coordinates</p>
-                       <p style="margin: 4px 0 0; font-size: 13px; font-weight: 800; color: #0a9396;">LAT: ${site.lat.toFixed(4)} / LON: ${site.lon.toFixed(4)}</p>
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                       <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Safety & Context</p>
-                       <p style="margin: 0; font-size: 12px; color: #475569; line-height: 1.6; max-height: 150px; overflow-y: auto;">${safetyContext}</p>
-                    </div>
-                    <div style="border-top: 1px solid #f1f5f9; pt: 12px; font-size: 10px; color: #94a3b8; font-style: italic;">
-                      Source: Overpass API / OpenStreetMap Contributors (OSM Data Source). This data is provided in real-time to ensure maximum navigational awareness for the KVS SCUBA Maldives 2026 Private Expedition.
-                    </div>
-                  </div>
-                `;
+                ${poi.description ? `<p style="margin: 0 0 12px; font-size: 13px; color: #475569; line-height: 1.6;">${poi.description}</p>` : ''}
+                
+                <div style="background: #f8fdff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; margin-bottom: 12px;">
+                   <div style="display: grid; grid-template-cols: 1fr 1fr; gap: 10px;">
+                      <div>
+                        <p style="margin: 0; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Lat</p>
+                        <p style="margin: 2px 0 0; font-size: 12px; font-weight: 800; color: #001219;">${poi.coordinates.lat}</p>
+                      </div>
+                      <div>
+                        <p style="margin: 0; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Lng</p>
+                        <p style="margin: 2px 0 0; font-size: 12px; font-weight: 800; color: #001219;">${poi.coordinates.lng}</p>
+                      </div>
+                   </div>
+                   
+                   ${poi.depth_range_m ? `
+                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
+                       <p style="margin: 0; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Depth Range</p>
+                       <p style="margin: 2px 0 0; font-size: 12px; font-weight: 800; color: #0a9396;">${poi.depth_range_m}m</p>
+                     </div>
+                   ` : ''}
 
-                const marker = L.marker([site.lat, site.lon], { icon: markerIcon }).addTo(mapRef.current!);
-                marker.bindPopup(popupContent);
-              });
-              setLoadingMap(false);
-            }
-          }, 100);
-        }
-      }
+                   ${poi.services ? `
+                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
+                       <p style="margin: 0; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Services</p>
+                       <p style="margin: 2px 0 0; font-size: 12px; font-weight: 700; color: #475569;">${poi.services.join(', ')}</p>
+                     </div>
+                   ` : ''}
+
+                   ${poi.cuisine ? `
+                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
+                       <p style="margin: 0; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Cuisine</p>
+                       <p style="margin: 2px 0 0; font-size: 12px; font-weight: 700; color: #475569;">${poi.cuisine.join(', ')}</p>
+                     </div>
+                   ` : ''}
+                </div>
+
+                ${poi.website ? `
+                  <a href="${poi.website}" target="_blank" style="display: block; width: 100%; text-align: center; background: #005f73; color: white; padding: 10px; border-radius: 12px; text-decoration: none; font-size: 12px; font-weight: 800; margin-bottom: 12px;">VISIT WEBSITE</a>
+                ` : ''}
+
+                ${poi.source_url ? `
+                  <a href="${poi.source_url}" target="_blank" style="display: block; width: 100%; text-align: center; background: #ee9b00; color: white; padding: 10px; border-radius: 12px; text-decoration: none; font-size: 12px; font-weight: 800; margin-bottom: 12px;">VIEW SOURCE</a>
+                ` : ''}
+
+                <div style="border-top: 1px solid #f1f5f9; pt: 12px; font-size: 9px; color: #94a3b8; display: flex; justify-content: space-between;">
+                  <span>Source: ${poi.source_url ? 'Verified Web' : (poi.data_source || 'Manual Input')}</span>
+                  <span>WGS84</span>
+                </div>
+              </div>
+            `;
+
+            const marker = L.marker([poi.coordinates.lat, poi.coordinates.lng], { icon: markerIcon }).bindPopup(popupContent);
+            layerGroup.addLayer(marker);
+          });
+
+          categoryLayersRef.current[category.category_id] = layerGroup;
+
+          // Add default visible layers
+          if (visibleCategories[category.category_id]) {
+            layerGroup.addTo(mapRef.current);
+          }
+        });
+
+        setLoadingMap(false);
+      }, 100);
     };
 
     initMap();
@@ -243,32 +241,19 @@ const Itinerary: React.FC = () => {
     }
   };
 
-  const togglePOILayer = (layerType: 'restaurants' | 'hotels' | 'attractions') => {
-    if (!mapRef.current || !poiLayersRef.current[layerType]) return;
-    
-    const layer = poiLayersRef.current[layerType];
-    if (layerType === 'restaurants') {
-      if (restaurantsVisible) {
-        mapRef.current.removeLayer(layer);
-      } else {
-        layer.addTo(mapRef.current);
-      }
-      setRestaurantsVisible(!restaurantsVisible);
-    } else if (layerType === 'hotels') {
-      if (hotelsVisible) {
-        mapRef.current.removeLayer(layer);
-      } else {
-        layer.addTo(mapRef.current);
-      }
-      setHotelsVisible(!hotelsVisible);
-    } else if (layerType === 'attractions') {
-      if (attractionsVisible) {
-        mapRef.current.removeLayer(layer);
-      } else {
-        layer.addTo(mapRef.current);
-      }
-      setAttractionsVisible(!attractionsVisible);
+  const toggleCategoryLayer = (categoryId: string) => {
+    if (!mapRef.current || !categoryLayersRef.current[categoryId]) return;
+
+    const layer = categoryLayersRef.current[categoryId];
+    const isVisible = visibleCategories[categoryId];
+
+    if (isVisible) {
+      mapRef.current.removeLayer(layer);
+    } else {
+      layer.addTo(mapRef.current);
     }
+
+    setVisibleCategories(prev => ({ ...prev, [categoryId]: !isVisible }));
   };
 
   const getRecommendedCourses = (difficulty: string) => {
@@ -306,10 +291,10 @@ const Itinerary: React.FC = () => {
     <div className="bg-[#f8fdff] min-h-screen pb-24">
       {/* Header Section */}
       <section className="pt-24 pb-16 px-6 bg-[#f0f9fa] border-b border-cyan-100">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-end justify-between gap-8">
+        <div className="w-full mx-auto flex flex-col md:flex-row items-end justify-between gap-8">
           <div className="space-y-6">
             <span className="text-[#ee9b00] font-black text-xs uppercase tracking-[0.4em]">Official Itinerary</span>
-            <h1 className="text-5xl md:text-8xl font-black text-[#001219] tracking-tight leading-none">YOUR DAILY<br/><span className="text-[#0a9396]">DIVE LOG</span></h1>
+            <h1 className="text-5xl md:text-8xl font-black text-[#001219] tracking-tight leading-none">YOUR DAILY<br /><span className="text-[#0a9396]">DIVE LOG</span></h1>
             <p className="text-gray-500 max-w-2xl text-lg font-medium leading-relaxed">
               Detaljan 12-dnevni plan ekspedicije za KVS tim. Svaka lokacija na mapi je povučena uživo sa OpenStreetMap platforme.
             </p>
@@ -317,13 +302,13 @@ const Itinerary: React.FC = () => {
           <div className="bg-[#005f73] text-white p-10 rounded-[50px] shadow-2xl flex items-center gap-10 border border-white/10 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-50" />
             <div className="text-center relative z-10">
-               <div className="text-5xl font-black tracking-tighter">12</div>
-               <div className="text-[10px] uppercase font-black tracking-[0.2em] text-cyan-300 mt-1">Dana</div>
+              <div className="text-5xl font-black tracking-tighter">12</div>
+              <div className="text-[10px] uppercase font-black tracking-[0.2em] text-cyan-300 mt-1">Dana</div>
             </div>
             <div className="w-px h-16 bg-white/20 relative z-10" />
             <div className="text-center relative z-10">
-               <div className="text-5xl font-black tracking-tighter">{osmDiveSites.length}+</div>
-               <div className="text-[10px] uppercase font-black tracking-[0.2em] text-cyan-300 mt-1">Urona</div>
+              <div className="text-5xl font-black tracking-tighter">{osmDiveSites.length}+</div>
+              <div className="text-[10px] uppercase font-black tracking-[0.2em] text-cyan-300 mt-1">Urona</div>
             </div>
           </div>
         </div>
@@ -331,7 +316,7 @@ const Itinerary: React.FC = () => {
 
       {/* Map Section */}
       <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full mx-auto">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
             <div className="flex items-center gap-4">
               <div className="bg-[#ee9b00] p-4 rounded-[24px] shadow-lg shadow-[#ee9b00]/20">
@@ -343,46 +328,44 @@ const Itinerary: React.FC = () => {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button 
+              <button
                 onClick={toggleMarineLayer}
-                className={`flex items-center gap-2 text-[10px] font-black uppercase px-4 py-2 rounded-full transition-all border shadow-sm whitespace-nowrap ${
-                  marineOverlayActive ? 'bg-[#005f73] text-white border-[#005f73]' : 'bg-white text-[#005f73] border-gray-100'
-                }`}
+                className={`flex items-center gap-2 text-[10px] font-black uppercase px-4 py-2 rounded-full transition-all border shadow-sm whitespace-nowrap ${marineOverlayActive ? 'bg-[#005f73] text-white border-[#005f73]' : 'bg-white text-[#005f73] border-gray-100'
+                  }`}
               >
                 <Layers className="w-4 h-4" /> Marine
               </button>
-              <button 
-                onClick={() => togglePOILayer('restaurants')}
-                className={`flex items-center gap-2 text-[10px] font-black uppercase px-4 py-2 rounded-full transition-all border shadow-sm whitespace-nowrap ${
-                  restaurantsVisible ? 'bg-[#ff6900] text-white border-[#ff6900]' : 'bg-white text-[#ff6900] border-gray-100'
-                }`}
-              >
-                <Coffee className="w-4 h-4" /> Restaurants
-              </button>
-              <button 
-                onClick={() => togglePOILayer('hotels')}
-                className={`flex items-center gap-2 text-[10px] font-black uppercase px-4 py-2 rounded-full transition-all border shadow-sm whitespace-nowrap ${
-                  hotelsVisible ? 'bg-[#0a9396] text-white border-[#0a9396]' : 'bg-white text-[#0a9396] border-gray-100'
-                }`}
-              >
-                <MapPin className="w-4 h-4" /> Hotels
-              </button>
-              <button 
-                onClick={() => togglePOILayer('attractions')}
-                className={`flex items-center gap-2 text-[10px] font-black uppercase px-4 py-2 rounded-full transition-all border shadow-sm whitespace-nowrap ${
-                  attractionsVisible ? 'bg-[#ee9b00] text-white border-[#ee9b00]' : 'bg-white text-[#ee9b00] border-gray-100'
-                }`}
-              >
-                <Camera className="w-4 h-4" /> Attractions
-              </button>
-              <button 
-                onClick={() => togglePOILayer('shops')}
-                className={`flex items-center gap-2 text-[10px] font-black uppercase px-4 py-2 rounded-full transition-all border shadow-sm whitespace-nowrap ${
-                  'bg-white text-[#d32626] border-gray-100 hover:bg-[#d32626] hover:text-white'
-                }`}
-              >
-                <AlertTriangle className="w-4 h-4" /> Pharmacies & Hospitals
-              </button>
+
+              {STRATEGIC_POIS.map(category => {
+                const isVisible = visibleCategories[category.category_id];
+                const color = {
+                  dive_sites: '#0a9396',
+                  dive_centers: '#ee9b00',
+                  medical_services: '#d32626',
+                  restaurants_cafes: '#ff6900',
+                  shops_markets: '#9b5de5',
+                  finance: '#00bbf9',
+                  transport: '#00f5d4'
+                }[category.category_id] || '#64748b';
+
+                return (
+                  <button
+                    key={category.category_id}
+                    onClick={() => toggleCategoryLayer(category.category_id)}
+                    className={`flex items-center gap-2 text-xs font-black uppercase px-4 py-2 rounded-full transition-all border shadow-sm whitespace-nowrap ${isVisible
+                      ? 'text-white'
+                      : 'bg-white border-gray-100'
+                      }`}
+                    style={{
+                      backgroundColor: isVisible ? color : 'white',
+                      borderColor: isVisible ? color : '#f1f5f9',
+                      color: isVisible ? 'white' : color
+                    }}
+                  >
+                    <span className="text-sm">{category.icon}</span> {category.display_name}
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div className="relative h-[70vh] w-full rounded-[60px] border border-cyan-50 shadow-2xl overflow-hidden group">
@@ -394,23 +377,23 @@ const Itinerary: React.FC = () => {
             )}
             <div id="dive-map" className="h-full w-full z-10" />
             <div className="absolute bottom-6 left-6 z-20 bg-white/90 backdrop-blur p-4 rounded-3xl border border-gray-100 shadow-xl hidden md:block">
-              <h4 className="text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Mapa Legenda</h4>
+              <h4 className="text-xs font-black uppercase text-gray-400 mb-3 tracking-widest">Mapa Legenda</h4>
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full bg-[#0a9396]" />
-                  <span className="text-[10px] font-bold text-[#001219]">Dive Site</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full bg-[#ff6900]" />
-                  <span className="text-[10px] font-bold text-[#001219]">Restaurant</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full bg-[#0a9396]" />
-                  <span className="text-[10px] font-bold text-[#001219]">Hotel</span>
+                  <span className="text-xs font-bold text-[#001219]">Diving</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full bg-[#ee9b00]" />
-                  <span className="text-[10px] font-bold text-[#001219]">Attraction</span>
+                  <span className="text-xs font-bold text-[#001219]">Centers</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-[#d32626]" />
+                  <span className="text-xs font-bold text-[#001219]">Medical</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-[#ff6900]" />
+                  <span className="text-xs font-bold text-[#001219]">Food</span>
                 </div>
               </div>
             </div>
@@ -420,7 +403,7 @@ const Itinerary: React.FC = () => {
 
       {/* Timeline Section */}
       <section id="itinerary" className="py-24 px-6 relative">
-        <div className="max-w-4xl mx-auto relative">
+        <div className="w-full mx-auto relative px-6">
           <div className="absolute left-[26px] md:left-[30px] top-8 bottom-8 w-1.5 bg-gradient-to-b from-[#005f73] via-[#0a9396] to-transparent rounded-full opacity-30" />
 
           <div className="space-y-16">
@@ -430,8 +413,8 @@ const Itinerary: React.FC = () => {
                   relative z-10 w-14 h-14 md:w-16 md:h-16 rounded-[24px] flex items-center justify-center border-[6px] shadow-2xl transition-all duration-500 shrink-0
                   ${item.type === 'Dive' ? 'bg-[#005f73] border-white scale-110 rotate-3' : 'bg-white border-[#f0f9fa] hover:rotate-3'}
                 `}>
-                  {React.cloneElement(getIcon(item.type) as React.ReactElement<any>, { 
-                    className: `w-6 h-6 md:w-8 md:h-8 ${item.type === 'Dive' ? 'text-white' : 'text-[#005f73]'}` 
+                  {React.cloneElement(getIcon(item.type) as React.ReactElement<any>, {
+                    className: `w-6 h-6 md:w-8 md:h-8 ${item.type === 'Dive' ? 'text-white' : 'text-[#005f73]'}`
                   })}
                   {item.type === 'Dive' && (
                     <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#ee9b00] rounded-full border-2 border-white animate-pulse" />
@@ -445,17 +428,17 @@ const Itinerary: React.FC = () => {
                   <div className="flex flex-col gap-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
-                        <span className="text-[#0a9396] font-black text-[10px] md:text-xs uppercase tracking-[0.3em] bg-cyan-50 px-4 py-1.5 rounded-full border border-cyan-100">
+                        <span className="text-[#0a9396] font-black text-xs md:text-sm uppercase tracking-[0.3em] bg-cyan-50 px-4 py-1.5 rounded-full border border-cyan-100">
                           Dan {item.day} • {item.date}
                         </span>
                         {item.location && (
-                          <span className="flex items-center gap-1.5 text-gray-400 font-bold text-[10px] uppercase tracking-widest">
+                          <span className="flex items-center gap-1.5 text-gray-400 font-bold text-xs uppercase tracking-widest">
                             <MapPin className="w-3.5 h-3.5" /> {item.location}
                           </span>
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between cursor-pointer group/title" onClick={() => toggleAccordion(idx)}>
                       <h3 className="text-3xl md:text-4xl font-black text-[#001219] tracking-tight group-hover/title:text-[#005f73] transition-colors">
                         {item.title}
@@ -467,7 +450,7 @@ const Itinerary: React.FC = () => {
                       )}
                     </div>
 
-                    <p className="text-gray-500 leading-relaxed text-lg font-medium">
+                    <p className="text-gray-500 leading-relaxed text-xl font-medium">
                       {item.description}
                     </p>
 
@@ -475,11 +458,11 @@ const Itinerary: React.FC = () => {
                       <div className="mt-10 pt-10 border-t border-gray-100 space-y-10 animate-in fade-in slide-in-from-top-6 duration-500">
                         {item.dives.map((dive, dIdx) => {
                           const siteInfo = getDiveSiteInfo(dive.site);
-                          
+
                           return (
                             <div key={dIdx} className="bg-[#f8fcfd] rounded-[40px] p-8 md:p-12 space-y-8 border border-cyan-50 relative overflow-hidden">
                               <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                              
+
                               <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
                                 <div className="flex items-center gap-4">
                                   <div className="p-4 bg-white rounded-2xl shadow-sm">
@@ -613,9 +596,9 @@ const Itinerary: React.FC = () => {
                                 </div>
                                 <div className="flex flex-wrap gap-3">
                                   {getRecommendedCourses(dive.difficulty || '').map((course, i) => (
-                                    <a 
-                                      key={i} 
-                                      href="https://www.divessi.com" 
+                                    <a
+                                      key={i}
+                                      href="https://www.divessi.com"
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="bg-[#f0f9fa] hover:bg-[#005f73] hover:text-white text-[#005f73] text-[10px] font-black px-6 py-3 rounded-2xl transition-all uppercase tracking-widest shadow-sm border border-cyan-100"

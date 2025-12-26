@@ -14,7 +14,12 @@ interface GalleryPhoto {
   title?: string;
 }
 
-const Gallery: React.FC = () => {
+interface GalleryProps {
+  lang?: 'BS' | 'EN';
+  theme?: 'light' | 'dark';
+}
+
+const Gallery: React.FC<GalleryProps> = ({ lang = 'BS', theme = 'light' }) => {
   const [category, setCategory] = useState('All');
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,15 +35,19 @@ const Gallery: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const { data, error: fetchError } = await supabase
           .from('gallery')
           .select('*')
           .order('created_at', { ascending: false });
-        
+
         if (fetchError) {
-          console.warn('Gallery table not available or empty:', fetchError.message);
-          setPhotos([]);
+          // Silently handle missing gallery table (expected if not yet created)
+          if (fetchError.message.includes('gallery')) {
+            setPhotos([]);
+          } else {
+            console.warn('Gallery error:', fetchError.message);
+          }
         } else {
           setPhotos((data || []).map((item: any) => ({
             id: item.id,
@@ -49,8 +58,13 @@ const Gallery: React.FC = () => {
             title: item.title
           })) as GalleryPhoto[]);
         }
-      } catch (err) {
-        console.error('Error loading gallery:', err);
+      } catch (err: any) {
+        // Suppress 404 errors which mean the table needs created
+        if (err.message && (err.message.includes('404') || err.message.includes('Not Found'))) {
+          console.warn('Gallery table not found - please run migration. (Showing empty state)');
+        } else {
+          console.error('Error loading gallery:', err);
+        }
         setPhotos([]);
       } finally {
         setLoading(false);
@@ -58,7 +72,7 @@ const Gallery: React.FC = () => {
     };
 
     loadPhotos();
-    
+
     // Subscribe to real-time changes
     const channel = supabase
       .channel('gallery_changes')
@@ -129,7 +143,7 @@ const Gallery: React.FC = () => {
       setSelectedFile(null);
       setSelectedCategory('Other');
       setUploadProgress(100);
-      
+
       // Refresh photos
       setTimeout(() => {
         const loadPhotos = async () => {
@@ -149,10 +163,15 @@ const Gallery: React.FC = () => {
         loadPhotos();
       }, 1000);
 
-    } catch (err) {
+    } catch (err: any) {
       const errorMsg = err instanceof Error ? err.message : 'Greška pri uploadu';
-      setError(`Upload neuspješan: ${errorMsg}`);
-      console.error('Upload error:', err);
+      if (errorMsg.includes('Bucket not found')) {
+        setError('Storage bucket missing. Admin setup required.');
+        console.warn('Storage bucket "gallery" missing.');
+      } else {
+        setError(`Upload neuspješan: ${errorMsg}`);
+        console.error('Upload error:', err);
+      }
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -175,7 +194,7 @@ const Gallery: React.FC = () => {
           <button className="p-2 glass-card rounded-xl text-cyan-400 hover:bg-cyan-500/10 transition-colors">
             <Filter className="w-5 h-5" />
           </button>
-          <button 
+          <button
             className="p-2 bg-cyan-600 hover:bg-cyan-700 rounded-xl text-white transition-colors flex items-center gap-2"
             onClick={() => {
               const input = document.getElementById('photo-upload') as HTMLInputElement;
@@ -196,7 +215,7 @@ const Gallery: React.FC = () => {
             <p className="text-sm font-bold text-red-500">Upload Failed</p>
             <p className="text-xs text-red-400">{error}</p>
           </div>
-          <button 
+          <button
             onClick={() => setError(null)}
             className="ml-auto p-1 hover:bg-red-500/10 rounded transition-colors"
           >
@@ -211,9 +230,12 @@ const Gallery: React.FC = () => {
           <button
             key={cat}
             onClick={() => setCategory(cat)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-              category === cat ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-900/50' : 'glass-card text-gray-400 hover:text-gray-300'
-            }`}
+            className={`px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border ${category === cat
+              ? 'bg-cyan-600 text-white border-cyan-500 shadow-lg shadow-cyan-900/20 translate-y-[-2px]'
+              : theme === 'dark'
+                ? 'bg-white/5 text-gray-400 border-white/10 hover:border-cyan-500/50 hover:text-white'
+                : 'bg-white text-gray-500 border-cyan-100 hover:border-cyan-300 hover:text-cyan-900 shadow-sm'
+              }`}
           >
             {cat}
           </button>
@@ -227,34 +249,38 @@ const Gallery: React.FC = () => {
           <p className="text-sm text-gray-400">Učitavam galeriju...</p>
         </div>
       ) : filteredPhotos.length === 0 ? (
-        <div className="p-8 glass-card rounded-3xl flex flex-col items-center justify-center text-center space-y-4 border-2 border-dashed border-white/20">
-          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center">
-            <Camera className="w-8 h-8 text-gray-500" />
+        <div className={`p-16 rounded-[40px] flex flex-col items-center justify-center text-center space-y-6 border-2 border-dashed transition-colors duration-300 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-cyan-50/50 border-cyan-100'
+          }`}>
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-inner ${theme === 'dark' ? 'bg-white/5' : 'bg-white'
+            }`}>
+            <Camera className="w-10 h-10 text-gray-400" />
           </div>
           <div>
-            <h4 className="font-bold">Galerija je prazna</h4>
-            <p className="text-xs text-gray-500 mt-1">Budite prvi koji ćete podijeliti fotografiju sa ekspedicije!</p>
+            <h4 className={`text-xl font-black uppercase tracking-tight ${theme === 'dark' ? 'text-white' : 'text-cyan-900'}`}>
+              {lang === 'BS' ? 'Galerija je prazna' : 'Gallery is empty'}
+            </h4>
+            <p className="text-sm font-medium text-gray-500 mt-2">
+              {lang === 'BS' ? 'Budite prvi koji ćete podijeliti fotografiju sa ekspedicije!' : 'Be the first to share an expedition photo!'}
+            </p>
           </div>
         </div>
       ) : (
         <div className="columns-2 gap-4 space-y-4">
           {filteredPhotos.map((photo) => (
-            <div 
-              key={photo.id} 
-              className="relative break-inside-avoid rounded-2xl overflow-hidden glass-card group cursor-pointer animate-in fade-in"
+            <div
+              key={photo.id}
+              className={`relative break-inside-avoid rounded-[32px] overflow-hidden group cursor-pointer animate-in fade-in duration-500 border ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-cyan-50 shadow-lg shadow-cyan-900/5'
+                }`}
             >
-              <img 
-                src={photo.image_url} 
-                alt="Gallery" 
-                className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500" 
+              <img
+                src={photo.image_url}
+                alt="Gallery"
+                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-110"
                 onError={(e) => (e.target as HTMLImageElement).src = DEFAULT_OCEAN_IMAGE}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-4">
-                <div className="flex-1" />
-                <div>
-                  <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">{photo.category}</p>
-                  <p className="text-[10px] text-gray-300 mt-1">by {photo.uploaded_by}</p>
-                </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-6">
+                <p className="text-xs text-cyan-400 font-black uppercase tracking-[0.2em] mb-1">{photo.category}</p>
+                <p className="text-[10px] text-white/70 font-bold">uploaded by {photo.uploaded_by}</p>
               </div>
             </div>
           ))}
@@ -262,14 +288,20 @@ const Gallery: React.FC = () => {
       )}
 
       {/* Upload Section */}
-      <div className="p-8 glass-card rounded-3xl space-y-4 border-dashed border-2 border-white/20">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center">
-            <ImageIcon className="w-6 h-6 text-gray-500" />
+      <div className={`p-10 rounded-[40px] space-y-8 border-2 border-dashed transition-all duration-300 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-cyan-100 shadow-xl shadow-cyan-900/5'
+        }`}>
+        <div className="flex items-center gap-6">
+          <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-lg ${theme === 'dark' ? 'bg-white/5' : 'bg-cyan-50'
+            }`}>
+            <ImageIcon className={`w-8 h-8 ${theme === 'dark' ? 'text-gray-400' : 'text-cyan-600'}`} />
           </div>
           <div>
-            <h4 className="font-bold">Dodaj nove fotografije</h4>
-            <p className="text-xs text-gray-500">Podijelite trenutke sa ekspedicije (Max 10MB)</p>
+            <h4 className={`text-xl font-black uppercase tracking-tight ${theme === 'dark' ? 'text-white' : 'text-cyan-900'}`}>
+              {lang === 'BS' ? 'Dodaj nove fotografije' : 'Add new photos'}
+            </h4>
+            <p className="text-sm font-medium text-gray-500 mt-1">
+              {lang === 'BS' ? 'Podijelite trenutke sa ekspedicije (Max 10MB)' : 'Share your expedition moments (Max 10MB)'}
+            </p>
           </div>
         </div>
 
@@ -289,8 +321,8 @@ const Gallery: React.FC = () => {
             </div>
             {uploadProgress > 0 && (
               <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                <div 
-                  className="bg-cyan-500 h-full transition-all duration-300" 
+                <div
+                  className="bg-cyan-500 h-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -301,10 +333,13 @@ const Gallery: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-bold text-gray-400 block mb-2">KATEGORIJA</label>
-            <select 
+            <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className={`w-full border rounded-2xl px-5 py-3 text-sm font-bold focus:outline-none focus:ring-4 transition-all appearance-none ${theme === 'dark'
+                ? 'bg-gray-900 border-white/10 text-white focus:ring-cyan-500/20'
+                : 'bg-gray-50 border-cyan-100 text-cyan-900 focus:ring-cyan-500/10'
+                }`}
             >
               <option value="Dive">Ronjenje 🤿</option>
               <option value="Group">Grupa 👥</option>
@@ -315,18 +350,18 @@ const Gallery: React.FC = () => {
           </div>
           <div>
             <label className="text-xs font-bold text-gray-400 block mb-2">DATOTEKA</label>
-            <input 
-              type="file" 
-              id="photo-upload" 
-              className="hidden" 
+            <input
+              type="file"
+              id="photo-upload"
+              className="hidden"
               accept="image/jpeg,image/png,image/webp"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) setSelectedFile(file);
               }}
             />
-            <label 
-              htmlFor="photo-upload" 
+            <label
+              htmlFor="photo-upload"
               className="w-full block bg-white/5 hover:bg-white/10 border-2 border-dashed border-white/20 hover:border-cyan-500/50 px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer text-center"
             >
               {selectedFile ? 'Promijeni' : 'Izaberi Datoteku'}

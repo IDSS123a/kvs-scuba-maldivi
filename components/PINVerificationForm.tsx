@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AlertCircle, CheckCircle, Loader2, ArrowLeft } from 'lucide-react';
-import { verifyPin, activateUserAfterPinVerification, createAuditLog } from '../services/pinService';
+import { verifyPin, createAuditLog } from '../services/pinService';
 
 interface PINVerificationFormProps {
   onSuccess?: (userId: string, userName: string) => void;
@@ -65,7 +65,7 @@ export const PINVerificationForm: React.FC<PINVerificationFormProps> = ({
     try {
       // SIMPLE: Verify PIN and get user
       const user = await verifyPin(pin);
-      
+
       if (!user) {
         console.error('❌ PIN verification failed');
         setError(t.invalidPin);
@@ -83,9 +83,10 @@ export const PINVerificationForm: React.FC<PINVerificationFormProps> = ({
       });
 
       setSuccess(true);
-      
+
       // Notify parent component
       setTimeout(() => {
+        // Notify parent component with correct arguments (userId, userName)
         onSuccess?.(user.id, user.name);
       }, 1500);
 

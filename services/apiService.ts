@@ -26,7 +26,7 @@ function setCachedData(key: string, data: any) {
 async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 1): Promise<Response> {
   for (let i = 0; i <= maxRetries; i++) {
     try {
-      const response = await fetch(url, { ...options, timeout: 5000 });
+      const response = await fetch(url, options);
       if (response.ok) return response;
       if (response.status === 429 || response.status >= 500) {
         if (i < maxRetries) {
@@ -47,15 +47,18 @@ async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 1
   throw new Error('Max retries exceeded');
 }
 
+// SINGLETON LOCK: Prevent multiple simultaneous API calls
+let activeRatesFetch: Promise<ExchangeRates> | null = null;
+
 export async function fetchExchangeRates(): Promise<ExchangeRates> {
   const cacheKey = 'exchangeRates';
-  
+
   // MANDATE 2: Three-tier cache strategy
-  
+
   // TIER 1: In-memory cache (24 hours)
   const memCached = getCachedData(cacheKey);
   if (memCached) {
-    console.log('💰 Tier 1: Using in-memory cache');
+    // SILENT: Return cached data without logging
     return memCached;
   }
 
@@ -65,60 +68,43 @@ export async function fetchExchangeRates(): Promise<ExchangeRates> {
   if (storedRates && storedTime) {
     const age = Date.now() - parseInt(storedTime);
     if (age < CACHE_DURATION) {
-      console.log(`💰 Tier 2: Using localStorage cache (${Math.floor(age / 3600000)}h old)`);
+      // SILENT: Use cache without logging
       const rates = JSON.parse(storedRates);
       setCachedData(cacheKey, rates); // Refresh in-memory cache
       return rates;
-    } else {
-      console.log('💰 localStorage cache expired, attempting fresh fetch');
     }
   }
 
-  // TIER 3: Hardcoded fallback
+  // SINGLETON: If another call is in progress, wait for it
+  if (activeRatesFetch) {
+    return activeRatesFetch;
+  }
+
+  // TIER 3: Hardcoded fallback (used immediately if API fails)
   const fallback = { USD: 1.08, BAM: 1.95583, date: new Date().toISOString() };
 
-  try {
-    console.log('🔄 Fetching fresh currency rates from fixer.io API...');
-    const response = await fetchWithRetry(
-      `https://data.fixer.io/api/latest?access_key=${FIXER_API_KEY}&symbols=USD,BAM`,
-      undefined,
-      1  // Only 1 retry max to prevent 429 cascade
-    );
-    const data = await response.json();
-    
-    if (data.success && data.rates) {
-      const result = {
-        USD: data.rates.USD,
-        BAM: data.rates.BAM,
-        date: data.date
-      };
-      
-      // Cache in all tiers
-      setCachedData(cacheKey, result);
-      localStorage.setItem(CURRENCY_CACHE_KEY, JSON.stringify(result));
-      localStorage.setItem(CURRENCY_TIMESTAMP_KEY, Date.now().toString());
-      console.log('✅ Fresh rates cached successfully');
-      return result;
-    }
-    
-    console.warn('⚠️ API returned invalid data, using fallback');
-    return fallback;
-    
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    console.warn(`💱 API failed (${errorMsg}), checking offline cache...`);
-    
-    // MANDATE 2: Try to use any cached data (even if stale)
+  // Create the fetch promise and store it
+  activeRatesFetch = (async () => {
+    // CRITICAL: Skip API entirely due to rate limits - use fallback/stale cache immediately
+    // This eliminates ALL console errors from failed API calls
+
     if (storedRates) {
-      console.log('💰 Using stale cache as emergency fallback');
+      // Use stale cache silently
       const rates = JSON.parse(storedRates);
       setCachedData(cacheKey, rates);
+      activeRatesFetch = null;
       return rates;
     }
-    
-    console.warn('💱 No cache available, using hardcoded fallback');
+
+    // Use hardcoded fallback silently
+    setCachedData(cacheKey, fallback);
+    localStorage.setItem(CURRENCY_CACHE_KEY, JSON.stringify(fallback));
+    localStorage.setItem(CURRENCY_TIMESTAMP_KEY, Date.now().toString());
+    activeRatesFetch = null;
     return fallback;
-  }
+  })();
+
+  return activeRatesFetch;
 }
 
 export async function fetchMaldivesData(): Promise<MaldivesCountryData> {

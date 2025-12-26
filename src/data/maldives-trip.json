@@ -1,0 +1,72 @@
+{
+  "trip": {
+    "destination": "Maldives",
+    "accommodation": "Hotel Horehi Beach",
+    "dateFrom": "2025-01-05",
+    "dateTo": "2025-01-16",
+    "duration": 12,
+    "type": "scuba_diving"
+  },
+  "diving_info": {
+    "water_temperature": "27-30°C",
+    "wetsuit_recommendation": "3mm shorty ili fullsuit",
+    "visibility": "20-40 metara",
+    "current": "Umjeren do jak - drift diving",
+    "marine_life": [
+      "Manta rays",
+      "Whale sharks (sezonski)",
+      "Grey reef sharks",
+      "White tip reef sharks",
+      "Eagle rays",
+      "Morske kornjače",
+      "Tune",
+      "Barrakude",
+      "Napoleon wrasse"
+    ],
+    "best_dive_sites": [
+      "Manta Point",
+      "Banana Reef",
+      "HP Reef",
+      "Fish Head (Mushimasmingili Thila)",
+      "Maaya Thila"
+    ],
+    "certifications_recommended": [
+      "SSI Open Water Diver (minimum)",
+      "SSI Advanced Adventurer",
+      "SSI Deep Diving (preporučeno)",
+      "SSI Enriched Air Nitrox"
+    ]
+  },
+  "local_info": {
+    "currency": "Maldivian Rufiyaa (MVR), ali USD široko prihvaćen",
+    "language": "Dhivehi (službeni), engleski široko rasprostranjen",
+    "timezone": "UTC+5",
+    "electricity": "230V, 50Hz - Type D/G/J utičnice",
+    "alcohol": "Dozvoljen samo u resortima, zabranjen na lokalnim otocima",
+    "dress_code": "Ležeran u resortima, konzervativan na lokalnim otocima",
+    "tap_water": "Nije za piće - kupiti flaširana",
+    "emergency_numbers": {
+      "police": "119",
+      "ambulance": "102",
+      "fire": "118",
+      "coast_guard": "191"
+    }
+  },
+  "tips": [
+    "Reef-safe krema je obavezna - zaštita koralja je prioritet",
+    "Neopren 3mm je idealan za temperature 27-30°C",
+    "Maldivi su muslimanska zemlja - poštovati lokalnu kulturu",
+    "Donirati USD u gotovini za napojnice (dive guides, osoblje)",
+    "Čuvati hidrataciju - piti minimum 3L vode dnevno zbog ronjenja",
+    "Nitrox je često dostupan - razmisliti o certifikaciji",
+    "Paziti na jake struje - drift diving je čest",
+    "Surface marker buoy je obavezan za sigurnost",
+    "Fotografija pod vodom - paziti na neutralnu plovnost",
+    "Kontrolirati potrošnju zraka - prosječan zaron 45-60min",
+    "Safety stop 3min na 5m je obavezan nakon svakog zarona",
+    "Ne dirati koralje i morski život - look but don't touch",
+    "Donirati novčanu pomoć za zaštitu koralja",
+    "Čuvati dubinski kompjuter - bit će vaš najbolji prijatelj",
+    "Uživati i dokumentirati iskustvo - zaroni se pamte zauvijek"
+  ]
+}

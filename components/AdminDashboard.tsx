@@ -145,32 +145,56 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setError(null);
 
     try {
-      // Fetch pending requests
+      // Fetch pending requests from USERS table
       const { data: pending, error: pendingErr } = await supabase
-        .from('divers')
+        .from('users')
         .select('*')
-        .eq('access_status', 'pending');
+        .eq('status', 'pending');
 
       if (pendingErr) throw pendingErr;
-      setPendingRequests(pending || []);
 
-      // Fetch all members
+      // Map 'status' to 'access_status' for compatibility
+      const mappedPending = (pending || []).map(p => ({
+        ...p,
+        access_status: p.status as any
+      }));
+      setPendingRequests(mappedPending);
+
+      // Fetch all members from USERS table
       const { data: allMembers, error: membersErr } = await supabase
-        .from('divers')
+        .from('users')
         .select('*')
         .order('name');
 
       if (membersErr) throw membersErr;
-      setMembers(allMembers || []);
 
-      // Fetch payments
+      const mappedMembers = (allMembers || []).map(m => ({
+        ...m,
+        access_status: m.status as any,
+        is_pro: m.role === 'admin'
+      }));
+      setMembers(mappedMembers);
+
+      // Fetch payments with correct column names
       const { data: paymentData, error: paymentErr } = await supabase
         .from('payments')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (paymentErr) throw paymentErr;
-      setPayments(paymentData || []);
+
+      // Map database columns to component interface
+      const mappedPayments = (paymentData || []).map(p => ({
+        id: p.id,
+        name: p.diver_name || 'Unknown',
+        paid_to_agency: Number(p.paid_to_agency || 0),
+        paid_to_adnan: Number(p.paid_to_adnana || 0), // Fix mapping here
+        add_for_kids: Number(p.add_for_kids || 0),
+        payment_date: p.payment_date,
+        status: p.status
+      }));
+
+      setPayments(mappedPayments);
 
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load data';
@@ -190,35 +214,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleApproveRequest = async (diver: Diver) => {
     try {
       console.log(`🔄 APPROVE REQUEST PROTOCOL START for ${diver.name}`);
-      
+
       // STEP 1: Generate unique 6-digit PIN (no hashing)
       let pin;
       let attempts = 0;
-      
+
       do {
         pin = Math.floor(100000 + Math.random() * 900000).toString();
-        
+
         // Check uniqueness in users table
         const { data: existing, error: checkError } = await supabase
           .from('users')
           .select('id')
           .eq('pin_code', pin)
           .limit(1);
-        
+
         if (checkError) throw checkError;
-        
+
         if (!existing || existing.length === 0) {
           console.log(`  ✅ PIN ${pin} is unique`);
           break;
         }
-        
+
         attempts++;
         if (attempts > 20) throw new Error('Cannot generate unique PIN');
       } while (true);
-      
+
       // STEP 2: Store in CORRECT FIELD - users.pin_code (plain text, NO hashing)
       console.log(`  💾 Saving PIN to users.pin_code: ${pin}`);
-      
+
       const { error: updateErr, data: updateData } = await supabase
         .from('users')
         .update({
@@ -230,12 +254,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         .select('id, pin_code, status, name, email');
 
       if (updateErr) throw updateErr;
-      
+
       console.log(`  ✅ PIN update executed. Returned rows:`, updateData?.length || 0);
-      
+
       // STEP 3: VERIFY PIN WAS SAVED - Two-stage verification
       let verification: any = null;
-      
+
       if (updateData && updateData.length > 0) {
         verification = updateData[0];
         console.log('✅ STAGE 1: Data from UPDATE query', verification);
@@ -246,14 +270,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           .select('id, pin_code, status, name, email')
           .eq('id', diver.id)
           .maybeSingle();
-        
+
         if (selectErr) throw selectErr;
         if (!selectData) throw new Error('User not found after PIN update');
-        
+
         verification = selectData;
         console.log('✅ STAGE 2: Data from SELECT query', verification);
       }
-      
+
       if (verification?.pin_code === pin) {
         console.log(`  🎉 PIN VERIFICATION SUCCESSFUL!`);
         console.log(`    PIN: ${verification.pin_code}`);
@@ -262,7 +286,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       } else {
         throw new Error('PIN verification failed after save');
       }
-      
+
       // Store PIN for display
       setGeneratedPins(prev => ({ ...prev, [diver.id]: pin }));
       setSuccess(`PIN for ${diver.name}: ${pin}`);
@@ -293,35 +317,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleRegeneratePin = async (diver: Diver) => {
     try {
       console.log(`🔄 REGENERATE PIN PROTOCOL START for ${diver.name}`);
-      
+
       // STEP 1: Generate unique 6-digit PIN
       let pin;
       let attempts = 0;
-      
+
       do {
         pin = Math.floor(100000 + Math.random() * 900000).toString();
-        
+
         // Check uniqueness in users table
         const { data: existing, error: checkError } = await supabase
           .from('users')
           .select('id')
           .eq('pin_code', pin)
           .limit(1);
-        
+
         if (checkError) throw checkError;
-        
+
         if (!existing || existing.length === 0) {
           console.log(`  ✅ PIN ${pin} is unique`);
           break;
         }
-        
+
         attempts++;
         if (attempts > 20) throw new Error('Cannot generate unique PIN');
       } while (true);
-      
+
       // STEP 2: Update with new PIN in users.pin_code field (plain text)
       console.log(`  💾 Saving new PIN: ${pin}`);
-      
+
       const { error: updateErr, data: updateData } = await supabase
         .from('users')
         .update({
@@ -332,12 +356,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         .select('id, pin_code');
 
       if (updateErr) throw updateErr;
-      
+
       console.log(`  ✅ PIN update executed. Returned rows:`, updateData?.length || 0);
-      
+
       // STEP 3: VERIFY NEW PIN WAS SAVED - Two-stage verification
       let verification: any = null;
-      
+
       if (updateData && updateData.length > 0) {
         verification = updateData[0];
         console.log('✅ STAGE 1: Data from UPDATE query', verification);
@@ -348,14 +372,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           .select('id, pin_code')
           .eq('id', diver.id)
           .maybeSingle();
-        
+
         if (selectErr) throw selectErr;
         if (!selectData) throw new Error('User not found after PIN update');
-        
+
         verification = selectData;
         console.log('✅ STAGE 2: Data from SELECT query', verification);
       }
-      
+
       if (verification?.pin_code === pin) {
         console.log(`  🎉 NEW PIN VERIFICATION SUCCESSFUL: ${pin}`);
         console.log(`🔄 REGENERATE PIN PROTOCOL END ✅`);
@@ -457,8 +481,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const calculateFinancials = () => {
     let total = 0, agency = 0, cash = 0;
     payments.forEach(p => {
-      const a = p.paid_to_agency || 0;
-      const c = p.paid_to_adnan || 0;
+      const a = Number(p.paid_to_agency) || 0;
+      const c = (Number(p.paid_to_adnan) || 0) + (Number(p.add_for_kids) || 0);
       total += a + c;
       agency += a;
       cash += c;
@@ -511,11 +535,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <button
                   key={tabName}
                   onClick={() => setTab(tabName)}
-                  className={`px-4 py-3 font-semibold text-sm flex items-center gap-2 transition border-b-2 ${
-                    tab === tabName
-                      ? 'border-cyan-500 text-cyan-400 bg-cyan-500/5'
-                      : 'border-transparent text-gray-400 hover:text-gray-300'
-                  }`}
+                  className={`px-4 py-3 font-semibold text-sm flex items-center gap-2 transition border-b-2 ${tab === tabName
+                    ? 'border-cyan-500 text-cyan-400 bg-cyan-500/5'
+                    : 'border-transparent text-gray-400 hover:text-gray-300'
+                    }`}
                 >
                   {icons[tabName]}
                   {labels[tabName]}
@@ -594,19 +617,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {Object.entries(generatedPins).map(([diverId, pin]) => {
                       const member = members.find((m: any) => m.id === diverId);
                       return (
-                      <div key={diverId} className="flex items-center justify-between bg-gray-800 p-3 rounded">
-                        <div>
-                          <p className="text-white font-mono text-lg">{pin}</p>
-                          <p className="text-xs text-gray-400">{member?.name}</p>
+                        <div key={diverId} className="flex items-center justify-between bg-gray-800 p-3 rounded">
+                          <div>
+                            <p className="text-white font-mono text-lg">{pin}</p>
+                            <p className="text-xs text-gray-400">{member?.name}</p>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(pin as string)}
+                            className="p-2 bg-gray-700 hover:bg-gray-600 rounded transition"
+                          >
+                            <Copy className="w-4 h-4 text-cyan-400" />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => copyToClipboard(pin as string)}
-                          className="p-2 bg-gray-700 hover:bg-gray-600 rounded transition"
-                        >
-                          <Copy className="w-4 h-4 text-cyan-400" />
-                        </button>
-                      </div>
-                    );
+                      );
                     })}
                   </div>
                 )}
@@ -643,20 +666,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <td className="px-4 py-3 text-white font-semibold">{member.name}</td>
                             <td className="px-4 py-3 text-gray-400 text-xs">{member.email}</td>
                             <td className="px-4 py-3">
-                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                                member.access_status === 'approved' 
-                                  ? 'bg-green-900/50 text-green-300' 
-                                  : 'bg-yellow-900/50 text-yellow-300'
-                              }`}>
+                              <span className={`px-2 py-1 rounded text-xs font-semibold ${member.access_status === 'approved'
+                                ? 'bg-green-900/50 text-green-300'
+                                : 'bg-yellow-900/50 text-yellow-300'
+                                }`}>
                                 {member.access_status}
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                                member.is_pro
-                                  ? 'bg-purple-900/50 text-purple-300'
-                                  : 'bg-gray-700 text-gray-300'
-                              }`}>
+                              <span className={`px-2 py-1 rounded text-xs font-semibold ${member.is_pro
+                                ? 'bg-purple-900/50 text-purple-300'
+                                : 'bg-gray-700 text-gray-300'
+                                }`}>
                                 {member.is_pro ? 'Yes' : 'No'}
                               </span>
                             </td>

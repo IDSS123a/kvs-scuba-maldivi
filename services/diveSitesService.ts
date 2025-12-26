@@ -145,10 +145,11 @@ const LOCAL_DIVE_SITES: DiveSiteDetails[] = [
 export async function fetchDiveSites(): Promise<DiveSiteDetails[]> {
   try {
     // Try DiveNumber API first
-    const diveSites = await fetchFromDiveNumberAPI();
-    if (diveSites.length > 0) {
-      return diveSites;
-    }
+    // API is currently offline/returning 404, disabling to prevent console errors
+    // const diveSites = await fetchFromDiveNumberAPI();
+    // if (diveSites.length > 0) {
+    //   return diveSites;
+    // }
   } catch (error) {
     console.warn('DiveNumber API failed, using fallback:', error);
   }
@@ -163,8 +164,10 @@ export async function fetchDiveSites(): Promise<DiveSiteDetails[]> {
  */
 async function fetchFromDiveNumberAPI(): Promise<DiveSiteDetails[]> {
   try {
-    // Try getting dive sites - DiveNumber API endpoint
-    const url = `${DIVENUMBER_BASE_URL}/dive-sites?key=${DIVENUMBER_API_KEY}&location=maldives`;
+    // Use proxy in development to avoid CORS issues, otherwise use absolute URL
+    const isDev = window.location.hostname === 'localhost';
+    const apiBase = isDev ? '/api/divenumber' : DIVENUMBER_BASE_URL;
+    const url = `${apiBase}/dive-sites?key=${DIVENUMBER_API_KEY}&location=maldives`;
 
     const response = await fetch(url);
 
@@ -192,7 +195,9 @@ async function fetchFromDiveNumberAPI(): Promise<DiveSiteDetails[]> {
 
     return [];
   } catch (error) {
-    console.error('Error fetching from DiveNumber API:', error);
+    // API is likely 404ing or down, which is expected during dev/testing. 
+    // Accessing https://divenumber.com/api/dive-sites directly confirms 404.
+    console.warn('DiveNumber API unavailable (using local fallback):', error);
     return [];
   }
 }
@@ -290,9 +295,9 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }

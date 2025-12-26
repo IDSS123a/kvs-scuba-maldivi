@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_FIXER_API_KEY: string;
   readonly VITE_GEOAPIFY_API_KEY: string;
   readonly VITE_USE_SUPABASE?: string;
+  readonly VITE_GEMINI_API_KEY: string;
 }
 
 interface ImportMeta {
