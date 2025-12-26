@@ -6,6 +6,7 @@ export interface User {
     role?: 'admin' | 'member' | 'pending' | 'user';
     created_at?: string;
     ssi_number?: string;
+    user_metadata?: any;
 }
 
 export interface Session {

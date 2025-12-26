@@ -19,7 +19,7 @@ interface ChecklistItem {
   category: string;
   description: string;
   mandatory: boolean;
-  priority: 'critical' | 'high' | 'medium';
+  priority: 'critical' | 'high' | 'medium' | 'low';
   weight?: number; // in grams
   bagType?: 'carry-on' | 'checked' | 'both'; // where to pack
   checked: boolean;
@@ -632,7 +632,7 @@ const ExpeditionChecklist: React.FC<ExpeditionChecklistProps> = ({ userId, onSav
   };
 
   const toggleItem = (id: string) => {
-    setItems(items.map(item => 
+    setItems(items.map(item =>
       item.id === id ? { ...item, checked: !item.checked } : item
     ));
   };
@@ -745,9 +745,9 @@ const ExpeditionChecklist: React.FC<ExpeditionChecklistProps> = ({ userId, onSav
         <h1>Maldives Expedition Checklist</h1>
         <p>Generated: ${new Date().toLocaleDateString()}</p>
         ${CATEGORIES.map(category => {
-          const categoryItems = getFilteredItems(category);
-          if (categoryItems.length === 0) return '';
-          return `
+      const categoryItems = getFilteredItems(category);
+      if (categoryItems.length === 0) return '';
+      return `
             <div class="category">
               <h2>${CATEGORY_ICONS[category]} ${category}</h2>
               ${categoryItems.map(item => `
@@ -759,7 +759,7 @@ const ExpeditionChecklist: React.FC<ExpeditionChecklistProps> = ({ userId, onSav
               `).join('')}
             </div>
           `;
-        }).join('')}
+    }).join('')}
       </body>
       </html>
     `;
@@ -782,7 +782,7 @@ const ExpeditionChecklist: React.FC<ExpeditionChecklistProps> = ({ userId, onSav
             Maldives Expedition Checklist
           </h1>
         </div>
-        
+
         {/* Overall Progress */}
         <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
@@ -794,7 +794,7 @@ const ExpeditionChecklist: React.FC<ExpeditionChecklistProps> = ({ userId, onSav
             </span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3">
-            <div 
+            <div
               className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300"
               style={{ width: `${totalStats.percentage}%` }}
             />
@@ -811,31 +811,28 @@ const ExpeditionChecklist: React.FC<ExpeditionChecklistProps> = ({ userId, onSav
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setFilterMode('all')}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              filterMode === 'all'
+            className={`px-4 py-2 rounded-lg transition-all ${filterMode === 'all'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:border-blue-500'
-            }`}
+              }`}
           >
             All Items
           </button>
           <button
             onClick={() => setFilterMode('carry-on')}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              filterMode === 'carry-on'
+            className={`px-4 py-2 rounded-lg transition-all ${filterMode === 'carry-on'
                 ? 'bg-green-600 text-white shadow-md'
                 : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:border-green-500'
-            }`}
+              }`}
           >
             Carry-on Only
           </button>
           <button
             onClick={() => setFilterMode('checked')}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              filterMode === 'checked'
+            className={`px-4 py-2 rounded-lg transition-all ${filterMode === 'checked'
                 ? 'bg-purple-600 text-white shadow-md'
                 : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:border-purple-500'
-            }`}
+              }`}
           >
             Checked Baggage
           </button>
@@ -884,7 +881,7 @@ const ExpeditionChecklist: React.FC<ExpeditionChecklistProps> = ({ userId, onSav
         {CATEGORIES.map(category => {
           const categoryItems = getFilteredItems(category);
           if (categoryItems.length === 0) return null;
-          
+
           const stats = getCategoryStats(category);
           const isExpanded = expandedCategories.has(category);
 
@@ -927,11 +924,10 @@ const ExpeditionChecklist: React.FC<ExpeditionChecklistProps> = ({ userId, onSav
                   {categoryItems.map(item => (
                     <div
                       key={item.id}
-                      className={`flex items-start gap-4 p-3 rounded-lg transition-colors ${
-                        item.checked
+                      className={`flex items-start gap-4 p-3 rounded-lg transition-colors ${item.checked
                           ? 'bg-green-50 dark:bg-green-900/20'
                           : 'bg-slate-50 dark:bg-slate-700/30'
-                      }`}
+                        }`}
                     >
                       {/* Checkbox */}
                       <button
@@ -949,9 +945,8 @@ const ExpeditionChecklist: React.FC<ExpeditionChecklistProps> = ({ userId, onSav
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span
-                            className={`font-bold text-slate-900 dark:text-white ${
-                              item.checked ? 'line-through text-slate-500' : ''
-                            }`}
+                            className={`font-bold text-slate-900 dark:text-white ${item.checked ? 'line-through text-slate-500' : ''
+                              }`}
                           >
                             {item.name}
                           </span>

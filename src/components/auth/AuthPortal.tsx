@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Mail, Lock, User, Award, CheckCircle, AlertCircle, Eye, EyeOff, Loader } from 'lucide-react';
-import { authService } from '@/services/authService';
+import { signInWithEmail, signInWithGoogle, signUpForAccess } from '../../services/authService';
 
 // Types
 interface LoginFormData {
@@ -97,7 +97,7 @@ export const AuthPortal: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, type, value } = e.target as HTMLInputElement;
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setState((prev) => ({
@@ -120,53 +120,53 @@ export const AuthPortal: React.FC = () => {
 
   const validateLoginForm = (): boolean => {
     const { email, password } = state.loginForm;
-    
+
     if (!email) {
       setState((prev) => ({ ...prev, error: 'Email is required' }));
       return false;
     }
-    
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setState((prev) => ({ ...prev, error: 'Please enter a valid email address' }));
       return false;
     }
-    
+
     if (!password) {
       setState((prev) => ({ ...prev, error: 'Password is required' }));
       return false;
     }
-    
+
     if (password.length < 6) {
       setState((prev) => ({ ...prev, error: 'Password must be at least 6 characters' }));
       return false;
     }
-    
+
     return true;
   };
 
   const validateRequestForm = (): boolean => {
     const { fullName, email, ssiNumber, agreedToTerms } = state.requestForm;
-    
+
     if (!fullName.trim()) {
       setState((prev) => ({ ...prev, error: 'Full name is required' }));
       return false;
     }
-    
+
     if (!email) {
       setState((prev) => ({ ...prev, error: 'Email is required' }));
       return false;
     }
-    
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setState((prev) => ({ ...prev, error: 'Please enter a valid email address' }));
       return false;
     }
-    
+
     if (!ssiNumber.trim()) {
       setState((prev) => ({ ...prev, error: 'SSI Number is required' }));
       return false;
     }
-    
+
     if (!agreedToTerms) {
       setState((prev) => ({
         ...prev,
@@ -174,24 +174,24 @@ export const AuthPortal: React.FC = () => {
       }));
       return false;
     }
-    
+
     return true;
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateLoginForm()) return;
-    
+
     setState((prev) => ({
       ...prev,
       loading: true,
       error: null,
       successMessage: null,
     }));
-    
+
     try {
-      await authService.signIn(state.loginForm.email, state.loginForm.password);
+      await signInWithEmail(state.loginForm.email, state.loginForm.password);
       setState((prev) => ({
         ...prev,
         loading: false,
@@ -215,9 +215,9 @@ export const AuthPortal: React.FC = () => {
       error: null,
       successMessage: null,
     }));
-    
+
     try {
-      await authService.signInWithGoogle();
+      await signInWithGoogle();
       setState((prev) => ({
         ...prev,
         loading: false,
@@ -235,25 +235,25 @@ export const AuthPortal: React.FC = () => {
 
   const handleRequestAccessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateRequestForm()) return;
-    
+
     setState((prev) => ({
       ...prev,
       loading: true,
       error: null,
       successMessage: null,
     }));
-    
+
     try {
       // Call authService to request access
-      await authService.requestAccess({
-        fullName: state.requestForm.fullName,
+      await signUpForAccess({
+        full_name: state.requestForm.fullName,
         email: state.requestForm.email,
-        ssiNumber: state.requestForm.ssiNumber,
-        experienceLevel: state.requestForm.experienceLevel,
+        ssi_number: state.requestForm.ssiNumber,
+        // password is optional in SignUpData, leaving it undefined to trigger temp password generation
       });
-      
+
       setState((prev) => ({
         ...prev,
         loading: false,
@@ -299,11 +299,10 @@ export const AuthPortal: React.FC = () => {
           <div className="flex border-b border-slate-200 dark:border-slate-700">
             <button
               onClick={() => handleTabChange('login')}
-              className={`flex-1 py-4 px-4 font-semibold text-sm transition-all duration-300 relative ${
-                state.activeTab === 'login'
-                  ? 'text-blue-600 dark:text-blue-400'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
-              }`}
+              className={`flex-1 py-4 px-4 font-semibold text-sm transition-all duration-300 relative ${state.activeTab === 'login'
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
+                }`}
               aria-selected={state.activeTab === 'login'}
               role="tab"
             >
@@ -314,11 +313,10 @@ export const AuthPortal: React.FC = () => {
             </button>
             <button
               onClick={() => handleTabChange('request-access')}
-              className={`flex-1 py-4 px-4 font-semibold text-sm transition-all duration-300 relative ${
-                state.activeTab === 'request-access'
-                  ? 'text-blue-600 dark:text-blue-400'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
-              }`}
+              className={`flex-1 py-4 px-4 font-semibold text-sm transition-all duration-300 relative ${state.activeTab === 'request-access'
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
+                }`}
               aria-selected={state.activeTab === 'request-access'}
               role="tab"
             >

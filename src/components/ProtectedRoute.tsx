@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Loading spinner component with theme support
@@ -27,135 +26,81 @@ interface RouteComponentProps {
 /**
  * ProtectedRoute Component
  * Wraps routes that require authentication
- * 
- * @param element - The component to render if authenticated
- * @returns The protected route component or redirect/loading state
- * 
- * @example
- * <Route
- *   path="/dashboard"
- *   element={<ProtectedRoute element={<Dashboard />} />}
- * />
  */
 export const ProtectedRoute: React.FC<RouteComponentProps> = ({ element }) => {
-  const navigate = useNavigate();
-  const { isLoading, isAuthenticated, user } = useAuth();
+  const { isLoading, user } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      // Redirect to login if not authenticated, preserving the original location
-      const currentLocation = window.location.pathname;
-      navigate('/login', { state: { from: currentLocation } });
+    if (!isLoading && !user) {
+      // Redirect to login if not authenticated
+      window.location.href = '/auth';
     }
-  }, [isLoading, isAuthenticated, navigate]);
+  }, [isLoading, user]);
 
-  // Show loading spinner while checking auth state
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  // Don't render anything if not authenticated (navigate effect will handle redirect)
-  if (!isAuthenticated || !user) {
+  if (!user) {
     return null;
   }
 
-  // Render the protected component
   return element;
 };
 
 /**
  * AdminRoute Component
- * Extends ProtectedRoute for admin-only routes
- * 
- * @param element - The component to render if user is admin
- * @returns The admin route component or redirect/loading state
- * 
- * @example
- * <Route
- *   path="/admin"
- *   element={<AdminRoute element={<AdminPanel />} />}
- * />
  */
 export const AdminRoute: React.FC<RouteComponentProps> = ({ element }) => {
-  const navigate = useNavigate();
-  const { isLoading, isAuthenticated, user } = useAuth();
+  const { isLoading, user } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
-      // Redirect to login if not authenticated
-      if (!isAuthenticated || !user) {
-        const currentLocation = window.location.pathname;
-        navigate('/login', { state: { from: currentLocation } });
-        return;
-      }
-
-      // Redirect to dashboard if not admin
-      if (user.role !== 'admin') {
-        navigate('/dashboard', { replace: true });
-        return;
+      if (!user) {
+        window.location.href = '/auth';
+      } else if (user.role !== 'admin') {
+        window.location.href = '/';
       }
     }
-  }, [isLoading, isAuthenticated, user, navigate]);
+  }, [isLoading, user]);
 
-  // Show loading spinner while checking auth state
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  // Don't render anything if not authenticated or not admin (navigate effect will handle redirect)
-  if (!isAuthenticated || !user || user.role !== 'admin') {
+  if (!user || user.role !== 'admin') {
     return null;
   }
 
-  // Render the admin component
   return element;
 };
 
 /**
  * ApprovedRoute Component
- * For routes requiring user to be approved (member or admin)
- * 
- * @param element - The component to render if user is approved
- * @returns The approved route component or redirect/loading state
- * 
- * @example
- * <Route
- *   path="/bookings"
- *   element={<ApprovedRoute element={<Bookings />} />}
- * />
  */
 export const ApprovedRoute: React.FC<RouteComponentProps> = ({ element }) => {
-  const navigate = useNavigate();
-  const { isLoading, isAuthenticated, user } = useAuth();
+  const { isLoading, user } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
-      // Redirect to login if not authenticated
-      if (!isAuthenticated || !user) {
-        const currentLocation = window.location.pathname;
-        navigate('/login', { state: { from: currentLocation } });
-        return;
-      }
-
-      // Redirect to pending approval if user is pending (not member or admin)
-      if (user.role !== 'member' && user.role !== 'admin') {
-        navigate('/pending-approval', { replace: true });
-        return;
+      if (!user) {
+        window.location.href = '/auth';
+      } else if (user.role !== 'member' && user.role !== 'admin') {
+        // Redirect if not approved (pending)
+        // Adjust redirection target as needed
+        console.warn('User not approved');
       }
     }
-  }, [isLoading, isAuthenticated, user, navigate]);
+  }, [isLoading, user]);
 
-  // Show loading spinner while checking auth state
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  // Don't render anything if not authenticated or not approved (navigate effect will handle redirect)
-  if (!isAuthenticated || !user || (user.role !== 'member' && user.role !== 'admin')) {
+  if (!user || (user.role !== 'member' && user.role !== 'admin')) {
     return null;
   }
 
-  // Render the approved component
   return element;
 };
 

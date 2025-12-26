@@ -25,6 +25,7 @@ export interface AuthUser {
   displayName: string;
   photoURL?: string;
   role: 'user' | 'admin';
+  user_metadata?: any;
 }
 
 export interface Diver {

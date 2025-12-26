@@ -204,7 +204,7 @@ const Dashboard: React.FC<Props> = ({ lang, theme }) => {
       </section>
 
       {/* Quick Action Tiles Section - NEW */}
-      <section className="py-12 px-6 -mt-10 relative z-20">
+      <section className="py-12 px-6 mt-6 md:-mt-10 relative z-20">
         <div className="w-full mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { id: 'culture', icon: Scale, color: 'bg-amber-500', label: t.culture },
