@@ -90,3 +90,34 @@ Ovo je najbitniji korak. Vercel mora znati vaše "tajne ključeve" (za bazu poda
 *   **Aplikacija se učita, ali nema podataka:** Vjerovatno niste dobro unijeli `VITE_SUPABASE_URL` ili `VITE_SUPABASE_ANON_KEY`. Otiđite u Vercel -> Settings -> Environment Variables i provjerite ih.
 
 Sretno! 🤞
+
+---
+
+## Dodatak: Razumijevanje i Ignorisanje Upozorenja (Warnings) ⚠️
+
+Nakon uspješnog deploymenta, ako otvorite "Developer Tools" (F12) u vašem pregledniku, možda ćete vidjeti neka žuta ili crvena upozorenja u konzoli (Console).
+
+**Važno je znati:** Većina ovih upozorenja dolazi od **Vercel alata**, a ne iz vaše aplikacije. Ona su bezopasna i ne utiču na rad aplikacije.
+
+### Česta upozorenja koja možete ignorisati:
+
+1.  **`[DEPRECATED] Default export is deprecated... zustand`**:
+    *   Ovo dolazi od Vercel Toolbar-a koji koristi stariju verziju jedne biblioteke. Nije dio vašeg koda.
+2.  **`DialogContent requires a DialogTitle...`**:
+    *   Također dio Vercel Toolbar interfejsa (alatna traka na dnu ekrana za komentare).
+3.  **`[Violation] Added non-passive event listener...`**:
+    *   Ovo je standardno upozorenje preglednika za skripte koje prate dodire na ekranu (opet, Vercel Toolbar).
+
+### Kako isključiti Vercel Toolbar (ako vam smeta)?
+
+Ako ne želite vidjeti crnu traku na dnu ekrana ("Add comment...") i želite ukloniti ova upozorenja:
+
+1.  Otiđite na vaš **Vercel Dashboard**.
+2.  Odaberite vaš projekat (`kvs-scuba-maldivi`).
+3.  Kliknite na **"Settings"** (gore desno).
+4.  U meniju lijevo odaberite **"Deployment Protection"**.
+5.  Pronađite sekciju **"Vercel Toolbar"**.
+6.  Kliknite **"Disable"** (ili isključite switch).
+7.  Spremite promjene.
+
+Sljedeći put kada otvorite svoju aplikaciju, traka i ta upozorenja će nestati.
