@@ -204,5 +204,23 @@
     "language": "Jezik",
     "english": "Engleski",
     "bosnian": "Bosanski"
+  },
+  "shopping": {
+    "title": "Kalkulator Kupovine",
+    "trigger": "KUPOVINA",
+    "item_name": "Naziv artikla",
+    "item_name_placeholder": "npr. Boca vode",
+    "price_mvr": "Cijena (MVR)",
+    "add": "Dodaj",
+    "total": "Ukupno",
+    "clear": "Očisti listu",
+    "save": "Spremi korpu",
+    "load": "Učitaj sačuvano",
+    "last_update": "Zadnje ažuriranje tečaja",
+    "empty": "Vaša korpa je prazna",
+    "saved_msg": "Korpa je uspješno spremljena!",
+    "currency_mvr": "MVR",
+    "currency_usd": "USD",
+    "currency_bam": "BAM"
   }
 }

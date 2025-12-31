@@ -1,0 +1,433 @@
+
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { View, Theme, Language } from './types';
+import Dashboard from './components/Dashboard';
+import Itinerary from './components/Itinerary';
+import Participants from './components/Participants';
+import Gallery from './components/Gallery';
+import Preparation from './components/Preparation';
+import EssentialInfo from './components/EssentialInfo';
+import MaldivesTripGuide from './components/MaldivesTripGuide';
+import Admin from './components/Admin';
+import Auth from './components/Auth';
+import ChatBot from './components/ChatBot';
+import { UserMenu } from './components/UserMenu';
+import { AuthProvider, useAuth } from './contexts/AuthProvider';
+import LoginPage from './components/LoginPage';
+import AuthCallback from './components/AuthCallback';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { SystemDiagnostics } from './components/SystemDiagnostics';
+import ShoppingCalculator from './components/ShoppingCalculator';
+import { ShoppingCart } from 'lucide-react';
+import './utils/formDiagnostics'; // Initialize form diagnostics in browser console
+import {
+    LayoutDashboard,
+    Map,
+    Users,
+    Camera,
+    ClipboardList,
+    Settings,
+    LogOut,
+    ShieldCheck,
+    Menu,
+    X,
+    Search,
+    User as UserIcon,
+    Facebook,
+    Instagram,
+    Globe,
+    Mail,
+    CheckCircle2,
+    Moon,
+    Sun,
+    Languages,
+    ExternalLink,
+    ShieldAlert,
+    HelpCircle,
+    Info,
+    ChevronRight,
+    AlertCircle
+} from 'lucide-react';
+
+const LOGO_URL = "https://www.scubasarajevo.com/wp-content/uploads/2024/02/cropped-LOGO-SCUBA-Sarajevo-okrugli-240px.png";
+const AUTHORIZED_ADMINS = ["Davor Mulalić", "Adnan Drnda", "Samir Solaković", "Davor Mulalic", "Adnan Drnda", "Samir Solakovic"];
+const ADMIN_EMAILS = ["mulalic71@gmail.com", "adnandrnda@hotmail.com", "samirso@hotmail.com"];
+
+// Get current route from pathname
+const getCurrentRoute = (): string => {
+    const pathname = window.location.pathname;
+    if (pathname.startsWith('/auth/callback')) return '/auth/callback';
+    if (pathname.startsWith('/auth')) return '/auth';
+    return '/';
+};
+
+const AppContent: React.FC = () => {
+    const { user: currentUser, isLoading, isAdmin, logout } = useAuth();
+    const [activeView, setActiveView] = useState<View>(View.DASHBOARD);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [activeModal, setActiveModal] = useState<'faq' | 'safety' | 'info' | null>(null);
+    const [currentRoute, setCurrentRoute] = useState<string>(getCurrentRoute());
+
+    const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('kvs_theme') as Theme) || 'light');
+    const [lang, setLang] = useState<Language>(() => (localStorage.getItem('kvs_lang') as Language) || 'BS');
+
+    const [email, setEmail] = useState('');
+    const [subscribed, setSubscribed] = useState(false);
+    const [isShoppingOpen, setIsShoppingOpen] = useState(false);
+
+    // Listen for route changes
+    useEffect(() => {
+        const handlePopState = () => {
+            setCurrentRoute(getCurrentRoute());
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('kvs_theme', theme);
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [theme]);
+
+    useEffect(() => {
+        localStorage.setItem('kvs_lang', lang);
+    }, [lang]);
+
+    const handleLogout = () => {
+        logout();
+        setActiveView(View.DASHBOARD);
+        setShowSettings(false);
+    };
+
+    const handleJoinNewsletter = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (email && email.includes('@')) {
+            const submissions = JSON.parse(localStorage.getItem('kvs_newsletter_logs') || '[]');
+            if (!submissions.some((s: any) => s.email === email)) {
+                submissions.push({ email, date: new Date().toISOString(), user: currentUser?.displayName });
+                localStorage.setItem('kvs_newsletter_logs', JSON.stringify(submissions));
+                setSubscribed(true);
+                setTimeout(() => setSubscribed(false), 3000);
+                setEmail('');
+            } else {
+                alert(lang === 'BS' ? 'Email je već prijavljen!' : 'Email is already subscribed!');
+            }
+        }
+    };
+
+    const translations = {
+        BS: {
+            appTitle: 'Maldives 2026',
+            explore: 'Istraži', diveSites: 'Lokacije', crew: 'Tim', media: 'Galerija', guides: 'Vodiči', essentialInfo: 'Informacije',
+            search: 'Traži...', settings: 'Postavke', nav: 'Navigacija', home: 'Početna', info: 'Informacije',
+            newsletter: 'Newsletter', join: 'Pridruži se', success: 'Uspješno ste se prijavili!',
+            copyright: '© 2026 KVS SCUBA Sarajevo. Sva prava zadržana. Privatni pristup zajednici.',
+            darkMode: 'Tamni režim', lightMode: 'Svijetli režim', lang: 'Jezik', logout: 'Odjava',
+            connectSSI: 'Poveži se na SSI / DivesSI',
+            safety: 'Sigurnosni protokoli', faq: 'Česta pitanja (FAQ)', divingGuide: 'Vodič za ronioce',
+            close: 'Zatvori', joinList: 'Pridruži se listi za najnovija ažuriranja.',
+            shopping: { trigger: 'KUPOVINA' }
+        },
+        EN: {
+            appTitle: 'Maldives 2026',
+            explore: 'Explore', diveSites: 'Dive Sites', crew: 'The Crew', media: 'Media', guides: 'Guides', essentialInfo: 'Essential Info',
+            search: 'Search...', settings: 'Settings', nav: 'Navigation', home: 'Home', info: 'Information',
+            newsletter: 'Newsletter', join: 'Join', success: 'Successfully subscribed!',
+            copyright: '© 2026 KVS SCUBA Sarajevo. All Rights Reserved. Private Community Access.',
+            darkMode: 'Dark Mode', lightMode: 'Light Mode', lang: 'Language', logout: 'Logout',
+            connectSSI: 'Connect to SSI / DivesSI',
+            safety: 'Safety Protocols', faq: 'Frequently Asked Questions (FAQ)', divingGuide: 'Diving Guide',
+            close: 'Close', joinList: 'Join the list for the latest updates.',
+            shopping: { trigger: 'SHOPPING' }
+        }
+    };
+
+    const t = translations[lang];
+
+    // Route-based rendering for OAuth flows
+    if (currentRoute === '/auth') {
+        return <LoginPage />;
+    }
+
+    if (currentRoute === '/auth/callback') {
+        return <AuthCallback />;
+    }
+
+    if (isLoading) return null;
+    if (!currentUser) return <Auth />;
+
+    const navItems = [
+        { id: View.DASHBOARD, icon: LayoutDashboard, label: t.explore },
+        { id: View.ITINERARY, icon: Map, label: t.diveSites },
+        { id: View.PARTICIPANTS, icon: Users, label: t.crew },
+        { id: View.GALLERY, icon: Camera, label: t.media },
+        { id: View.PREPARATION, icon: ClipboardList, label: t.guides },
+        { id: View.GUIDES, icon: HelpCircle, label: 'Maldives' },
+        { id: View.ESSENTIAL_INFO, icon: AlertCircle, label: t.essentialInfo },
+    ];
+
+    const renderView = () => {
+        return (
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={activeView}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                >
+                    {(() => {
+                        switch (activeView) {
+                            case View.DASHBOARD: return <Dashboard lang={lang} theme={theme} />;
+                            case View.ITINERARY: return <Itinerary lang={lang} theme={theme} />;
+                            case View.PARTICIPANTS: return <Participants isAdmin={isAdmin} lang={lang} theme={theme} />;
+                            case View.GALLERY: return <Gallery lang={lang} theme={theme} />;
+                            case View.PREPARATION: return <Preparation lang={lang} theme={theme} />;
+                            case View.GUIDES: return <MaldivesTripGuide lang={lang} theme={theme} />;
+                            case View.ESSENTIAL_INFO: return <EssentialInfo lang={lang} theme={theme} />;
+                            case View.ADMIN: return <ProtectedRoute requiredRole="admin"><Admin lang={lang} theme={theme} onLogout={handleLogout} /></ProtectedRoute>;
+                            default: return <Dashboard lang={lang} theme={theme} />;
+                        }
+                    })()}
+                </motion.div>
+            </AnimatePresence>
+        );
+    };
+
+    return (
+        <>
+            {/* 🔧 DIAGNOSTICS MODE: Remove this block when tests pass */}
+            {window.location.pathname === '/diagnostics' && <SystemDiagnostics />}
+
+            {window.location.pathname !== '/diagnostics' && (
+                <div className="min-h-screen flex flex-col font-sans">
+                    <nav className={`fixed top-0 left-0 right-0 z-[100] border-b px-6 py-4 shadow-sm transition-colors duration-300 ${theme === 'dark' ? 'bg-[#001219]/95 border-cyan-900/50' : 'bg-white/95 border-cyan-100'}`}>
+                        <div className="w-full mx-auto flex items-center justify-between">
+                            <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => setActiveView(View.DASHBOARD)} onDoubleClick={() => setActiveView(View.ADMIN)}>
+                                <img src={LOGO_URL} alt="Logo" className="w-10 h-10 object-contain" />
+                                <h1 className="app-title text-xl font-extrabold tracking-tight text-[#005f73] hidden sm:block">{t.appTitle}</h1>
+                            </div>
+
+                            <div className="hidden lg:flex items-center gap-8">
+                                {navItems.map((item) => (
+                                    <button key={item.id} onClick={() => setActiveView(item.id)} className={`nav-link text-base uppercase tracking-wider font-bold transition-colors ${activeView === item.id ? 'text-[#0a9396]' : (theme === 'dark' ? 'text-gray-300 hover:text-[#ee9b00]' : 'text-[#001219] hover:text-[#ee9b00]')}`}>
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className={`hidden md:flex items-center border rounded-full px-4 py-2 transition-colors duration-300 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-cyan-50 border-cyan-100'}`}>
+                                    <Search className={`w-4 h-4 mr-2 ${theme === 'dark' ? 'text-cyan-400' : 'text-cyan-600'}`} />
+                                    <input type="text" placeholder={t.search} className="bg-transparent text-sm outline-none w-32 focus:w-48 transition-all" />
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    {isAdmin && (
+                                        <button onClick={() => setActiveView(View.ADMIN)} className={`p-2 rounded-full transition-colors ${activeView === View.ADMIN ? 'text-[#005f73] bg-cyan-100' : 'text-gray-500 hover:text-[#005f73]'}`} title="Admin Panel">
+                                            <Settings className="w-5 h-5" />
+                                        </button>
+                                    )}
+                                    <UserMenu
+                                        theme={theme}
+                                        onThemeChange={setTheme}
+                                        lang={lang}
+                                        onLanguageChange={setLang}
+                                    />
+                                </div>
+                                <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden p-2">{isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}</button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {showSettings && (
+                        <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 animate-in fade-in duration-300">
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSettings(false)} />
+                            <div className={`w-full max-w-sm rounded-[40px] p-8 relative shadow-2xl animate-in zoom-in-95 duration-500 ${theme === 'dark' ? 'bg-[#001219] border border-white/10' : 'bg-white'}`}>
+                                <h3 className="text-xl font-black mb-8 flex items-center gap-3"><UserIcon className="w-5 h-5 text-[#0a9396]" /> {t.settings}</h3>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 rounded-3xl bg-gray-500/5">
+                                        <div className="flex items-center gap-3">
+                                            {theme === 'light' ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-cyan-400" />}
+                                            <span className="text-base font-bold uppercase tracking-widest">{theme === 'light' ? t.lightMode : t.darkMode}</span>
+                                        </div>
+                                        <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} className={`w-12 h-6 rounded-full relative transition-colors ${theme === 'dark' ? 'bg-cyan-600' : 'bg-gray-300'}`}>
+                                            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${theme === 'dark' ? 'left-7' : 'left-1'}`} />
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center justify-between p-4 rounded-3xl bg-gray-500/5">
+                                        <div className="flex items-center gap-3">
+                                            <Languages className="w-5 h-5 text-[#0a9396]" />
+                                            <span className="text-sm font-bold uppercase tracking-widest">{t.lang} ({lang})</span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => setLang('BS')} className={`px-3 py-1 rounded-lg text-xs font-black ${lang === 'BS' ? 'bg-[#0a9396] text-white' : 'bg-gray-200 text-gray-500'}`}>BS</button>
+                                            <button onClick={() => setLang('EN')} className={`px-3 py-1 rounded-lg text-xs font-black ${lang === 'EN' ? 'bg-[#0a9396] text-white' : 'bg-gray-200 text-gray-500'}`}>EN</button>
+                                        </div>
+                                    </div>
+                                    <a href="https://my.divessi.com/login" target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-3 p-4 rounded-3xl bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500 hover:text-white transition-all font-black text-xs uppercase tracking-widest border border-cyan-500/20">
+                                        <ExternalLink className="w-4 h-4" /> {t.connectSSI}
+                                    </a>
+                                    <button onClick={handleLogout} className="w-full flex items-center justify-center gap-3 p-4 rounded-3xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all font-black text-xs uppercase tracking-widest">
+                                        <LogOut className="w-4 h-4" /> {t.logout}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeModal && (
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in fade-in duration-300">
+                            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setActiveModal(null)} />
+                            <div className={`w-full max-w-2xl rounded-[40px] p-10 relative shadow-2xl animate-in zoom-in-95 duration-500 overflow-y-auto max-h-[80vh] ${theme === 'dark' ? 'bg-[#001219] border border-white/10' : 'bg-white'}`}>
+                                <button onClick={() => setActiveModal(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-gray-500/10"><X className="w-6 h-6" /></button>
+                                {activeModal === 'faq' && (
+                                    <div className="space-y-6">
+                                        <h2 className="text-3xl font-black flex items-center gap-4 text-[#005f73]"><HelpCircle className="w-8 h-8" /> {t.faq}</h2>
+                                        <div className="space-y-4">
+                                            <details className="group border-b border-gray-100 pb-4">
+                                                <summary className="font-bold cursor-pointer list-none flex justify-between items-center">{lang === 'BS' ? 'Da li je uključena doplata za Shark Tank?' : 'Is Shark Tank surcharge included?'} <ChevronRight className="w-4 h-4 group-open:rotate-90 transition-transform" /></summary>
+                                                <p className="mt-2 text-base text-gray-500">{lang === 'BS' ? 'Ne, zaron kod Hulhumalea se doplaćuje na licu mjesta direktno u centru. Cijena je podložna promjeni ali se kreće oko 100-150 USD.' : 'No, the Hulhumale dive is paid on-site directly to the dive center. Prices range from 100-150 USD.'}</p>
+                                            </details>
+                                            <details className="group border-b border-gray-100 pb-4">
+                                                <summary className="font-bold cursor-pointer list-none flex justify-between items-center">{lang === 'BS' ? 'Koju seriju dolara ponijeti?' : 'Which USD series to bring?'} <ChevronRight className="w-4 h-4 group-open:rotate-90 transition-transform" /></summary>
+                                                <p className="mt-2 text-base text-gray-500">{lang === 'BS' ? 'Isključivo serije novije od 2013. godine, neoštećene. Starije serije ili novčanice sa pečatima se ne primaju na Maldivima.' : 'Only series newer than 2013, undamaged. Stamped or older notes are often rejected in the Maldives.'}</p>
+                                            </details>
+                                        </div>
+                                    </div>
+                                )}
+                                {activeModal === 'safety' && (
+                                    <div className="space-y-6">
+                                        <h2 className="text-3xl font-black flex items-center gap-4 text-emerald-500"><ShieldAlert className="w-8 h-8" /> {t.safety}</h2>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/10">
+                                                <h4 className="font-black text-emerald-500 uppercase text-xs mb-2">Buddy System</h4>
+                                                <p className="text-base opacity-80">{lang === 'BS' ? 'Nikada ne ronite sami. Buddy check je obavezan prije svakog ulaska.' : 'Never dive alone. Buddy check is mandatory before every entry.'}</p>
+                                            </div>
+                                            <div className="p-6 rounded-3xl bg-amber-500/5 border border-amber-500/10">
+                                                <h4 className="font-black text-amber-500 uppercase text-xs mb-2">No-Fly Zone</h4>
+                                                <p className="text-base opacity-80">{lang === 'BS' ? 'Minimalno 24 sata pauze prije leta nakon ronjenja.' : 'At least 24 hours break before flying after diving.'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {activeModal === 'info' && (
+                                    <div className="space-y-6">
+                                        <h2 className="text-3xl font-black flex items-center gap-4 text-cyan-500"><Info className="w-8 h-8" /> {t.info}</h2>
+                                        <p className="text-xl font-medium opacity-80 leading-relaxed">
+                                            {lang === 'BS' ? 'KVS SCUBA Maldives 2026 je privatna ekspedicija fokusirana na Južni Male Atol. Baza je Maafushi Island, Kaafu Atoll. Paket uključuje 10 noćenja i ronilački paket.' : 'KVS SCUBA Maldives 2026 is a private expedition focused on South Male Atoll. Base is Maafushi Island, Kaafu Atoll. Package includes 10 nights and diving sessions.'}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {isMenuOpen && (
+                        <div className={`fixed inset-0 z-[99] pt-24 px-6 animate-in slide-in-from-right duration-300 lg:hidden ${theme === 'dark' ? 'bg-[#001219]' : 'bg-white'}`}>
+                            <div className="flex flex-col gap-6">
+                                {navItems.map((item) => (
+                                    <button key={item.id} onClick={() => { setActiveView(item.id); setIsMenuOpen(false); }} className={`text-xl font-bold flex items-center gap-4 border-b border-gray-100 pb-4 ${theme === 'dark' ? 'text-white' : 'text-[#001219]'}`}>
+                                        <item.icon className="w-6 h-6 text-[#005f73]" /> {item.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <main className="flex-grow pt-20">{renderView()}</main>
+
+                    <footer id="kvsscuba" className={`py-16 px-6 border-t transition-colors duration-300 ${theme === 'dark' ? 'bg-[#000d11] text-white border-cyan-900/50' : 'bg-[#001219] text-white border-cyan-900/50'}`}>
+                        <div className="w-full mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <img src={LOGO_URL} alt="Logo" className="w-12 h-12 brightness-110" />
+                                    <div className="flex flex-col">
+                                        <h2 className="text-xl font-bold tracking-tight">KVS SCUBA</h2>
+                                        <span className="text-xs text-cyan-400 font-bold uppercase tracking-widest">Sarajevo Expedition Team</span>
+                                    </div>
+                                </div>
+                                <div className="text-gray-400 text-base leading-relaxed">
+                                    Klub vodenih sportova S.C.U.B.A.<br />Trg grada Prato 24, 71000 Sarajevo<br />Bosna i Hercegovina<br />
+                                    <span className="flex items-center gap-2 mt-2 text-cyan-300"><Mail className="w-4 h-4" /> kvsscuba@gmail.com</span>
+                                    <span className="flex items-center gap-2 mt-1 text-cyan-300"><UserIcon className="w-4 h-4" /> Tel: +387 62 332 082</span>
+                                </div>
+                                <div className="flex gap-4 pt-2">
+                                    <a href="https://www.facebook.com/scubasarajevo" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors"><Facebook className="w-5 h-5 text-gray-300" /></a>
+                                    <a href="https://www.instagram.com/scuba_sarajevo/" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors"><Instagram className="w-5 h-5 text-gray-300" /></a>
+                                    <a href="https://www.scubasarajevo.com/" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors"><Globe className="w-5 h-5 text-gray-300" /></a>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold mb-6 text-white border-b border-cyan-500/30 pb-2">{t.nav}</h3>
+                                <ul className="space-y-4 text-gray-400 text-base">
+                                    <li className="hover:text-white cursor-pointer transition-colors" onClick={() => setActiveView(View.DASHBOARD)}>{t.home}</li>
+                                    <li className="hover:text-white cursor-pointer transition-colors" onClick={() => setActiveView(View.ITINERARY)}>{t.diveSites}</li>
+                                    <li className="hover:text-white cursor-pointer transition-colors" onClick={() => setActiveView(View.PARTICIPANTS)}>{t.crew}</li>
+                                    <li className="hover:text-white cursor-pointer transition-colors" onClick={() => setActiveView(View.PREPARATION)}>{t.guides}</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold mb-6 text-white border-b border-cyan-500/30 pb-2">{t.info}</h3>
+                                <ul className="space-y-4 text-gray-400 text-sm">
+                                    <li className="hover:text-white cursor-pointer transition-colors" onClick={() => setActiveModal('info')}>{t.info}</li>
+                                    <li className="hover:text-white cursor-pointer transition-colors" onClick={() => setActiveView(View.PREPARATION)}>{t.divingGuide}</li>
+                                    <li className="hover:text-white cursor-pointer transition-colors" onClick={() => setActiveModal('safety')}>{t.safety}</li>
+                                    <li className="hover:text-white cursor-pointer transition-colors" onClick={() => setActiveModal('faq')}>{t.faq}</li>
+                                </ul>
+                            </div>
+                            <div className="space-y-6">
+                                <h3 className="text-lg font-bold border-b border-cyan-500/30 pb-2">{t.newsletter}</h3>
+                                <p className="text-gray-400 text-sm">{t.joinList}</p>
+                                <form onSubmit={handleJoinNewsletter} className={`flex rounded-full p-1 border transition-all duration-300 focus-within:border-cyan-500 shadow-sm ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-cyan-100'}`}>
+                                    <input id="newsletter-email" type="email" placeholder="Email" className={`bg-transparent flex-1 px-4 text-sm outline-none transition-colors ${theme === 'dark' ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'}`} value={email} onChange={(e) => setEmail(e.target.value)} required />
+                                    <button id="newsletter-join" type="submit" className="bg-[#ee9b00] text-white px-6 py-2 rounded-full text-xs font-black uppercase hover:bg-[#ffae00] transition-colors shadow-lg shadow-amber-900/10">
+                                        {subscribed ? <CheckCircle2 className="w-4 h-4" /> : t.join}
+                                    </button>
+                                </form>
+                                {subscribed && <p className="text-xs text-emerald-400 font-bold animate-pulse">{t.success}</p>}
+                            </div>
+                        </div>
+                        <div className="w-full mx-auto mt-16 pt-8 border-t border-white/5 text-center text-gray-500 text-xs"><p className="copyright">{t.copyright}</p></div>
+                    </footer>
+                    <ChatBot theme={theme} lang={lang} isAdmin={isAdmin} />
+
+                    {/* Shopping Calculator Trigger & Modal */}
+                    <div className="fixed bottom-40 right-5 z-[1000] flex flex-col items-end">
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setIsShoppingOpen(true)}
+                            className="bg-[#ee9b00] text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border-2 border-white/50 group"
+                        >
+                            <ShoppingCart className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                            <span className="text-[11px] font-black uppercase tracking-widest">{t.shopping?.trigger || 'KUPOVINA'}</span>
+                        </motion.button>
+                        <ShoppingCalculator
+                            theme={theme}
+                            isOpen={isShoppingOpen}
+                            onClose={() => setIsShoppingOpen(false)}
+                        />
+                    </div>
+                </div>
+            )}
+        </>
+    );
+};
+
+// Wrap entire app with AuthProvider at root level
+const App: React.FC = () => {
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
+    );
+};
+
+export default App;

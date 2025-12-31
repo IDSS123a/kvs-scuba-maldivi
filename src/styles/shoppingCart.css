@@ -1,0 +1,52 @@
+
+/* Shopping Cart Custom Styles */
+
+.shopping-cart-modal {
+    animation: scaleIn 0.3s ease-out;
+}
+
+.shopping-cart-overlay {
+    animation: fadeIn 0.2s ease-out;
+}
+
+.shopping-item-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shopping-item-card:hover {
+    transform: translateY(-2px);
+}
+
+.input-mvr {
+    position: relative;
+}
+
+.input-mvr::after {
+    content: 'MVR';
+    position: absolute;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 900;
+    font-size: 0.75rem;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* Custom scrollbar for the items list */
+.items-list-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.items-list-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.items-list-scroll::-webkit-scrollbar-thumb {
+    background: rgba(10, 147, 150, 0.2);
+    border-radius: 10px;
+}
+
+.items-list-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(10, 147, 150, 0.4);
+}

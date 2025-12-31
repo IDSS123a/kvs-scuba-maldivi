@@ -204,5 +204,23 @@
     "language": "Language",
     "english": "English",
     "bosnian": "Bosnian"
+  },
+  "shopping": {
+    "title": "Shopping Calculator",
+    "trigger": "SHOPPING",
+    "item_name": "Item Name",
+    "item_name_placeholder": "e.g. Water Bottle",
+    "price_mvr": "Price (MVR)",
+    "add": "Add",
+    "total": "Total",
+    "clear": "Clear List",
+    "save": "Save Cart",
+    "load": "Load Saved",
+    "last_update": "Last rate update",
+    "empty": "Your cart is empty",
+    "saved_msg": "Cart saved successfully!",
+    "currency_mvr": "MVR",
+    "currency_usd": "USD",
+    "currency_bam": "BAM"
   }
 }
