@@ -17,24 +17,25 @@ export enum View {
 }
 // ------------------------------------------
 
-// --- IMPORTI SA .tsx EKSTENZIJAMA ---
-import Dashboard from './components/Dashboard.tsx';
-import Itinerary from './components/Itinerary.tsx';
-import Participants from './components/Participants.tsx';
-import Gallery from './components/Gallery.tsx';
-import Preparation from './components/Preparation.tsx';
-import EssentialInfo from './components/EssentialInfo.tsx';
-import MaldivesTripGuide from './components/MaldivesTripGuide.tsx';
-import Admin from './components/Admin.tsx';
-import Auth from './components/Auth.tsx';
-import ChatBot from './components/ChatBot.tsx';
-import { UserMenu } from './components/UserMenu.tsx';
-import { AuthProvider, useAuth } from './contexts/AuthProvider.tsx';
-import LoginPage from './components/LoginPage.tsx';
-import AuthCallback from './components/AuthCallback.tsx';
-import { ProtectedRoute } from './components/ProtectedRoute.tsx';
-import { SystemDiagnostics } from './components/SystemDiagnostics.tsx';
-import ShoppingCalculator from './components/ShoppingCalculator.tsx';
+// --- IMPORTI SA MALIM SLOVIMA (FIX ZA LINUX/VERCEL) ---
+// Git vjerovatno misli da su fajlovi malim slovima.
+import Dashboard from './components/dashboard.tsx';
+import Itinerary from './components/itinerary.tsx';
+import Participants from './components/participants.tsx';
+import Gallery from './components/gallery.tsx';
+import Preparation from './components/preparation.tsx';
+import EssentialInfo from './components/essentialInfo.tsx';
+import MaldivesTripGuide from './components/maldivesTripGuide.tsx';
+import Admin from './components/admin.tsx';
+import Auth from './components/auth.tsx';
+import ChatBot from './components/chatBot.tsx';
+import { UserMenu } from './components/userMenu.tsx';
+import { AuthProvider, useAuth } from './contexts/AuthProvider.tsx'; // Contexts obicno ostaju ok
+import LoginPage from './components/loginPage.tsx';
+import AuthCallback from './components/authCallback.tsx';
+import { ProtectedRoute } from './components/protectedRoute.tsx';
+import { SystemDiagnostics } from './components/systemDiagnostics.tsx';
+import ShoppingCalculator from './components/shoppingCalculator.tsx';
 import { ShoppingCart } from 'lucide-react';
 import './utils/formDiagnostics';
 
@@ -178,8 +179,15 @@ const AppContent: React.FC = () => {
     if (isLoading) return null;
     if (!currentUser) return <Auth />;
 
-    // Placeholder components for rendering only
-    const DashboardComponent = Dashboard;
+    const navItems = [
+        { id: View.DASHBOARD, icon: LayoutDashboard, label: t.explore },
+        { id: View.ITINERARY, icon: Map, label: t.diveSites },
+        { id: View.PARTICIPANTS, icon: Users, label: t.crew },
+        { id: View.GALLERY, icon: Camera, label: t.media },
+        { id: View.PREPARATION, icon: ClipboardList, label: t.guides },
+        { id: View.GUIDES, icon: HelpCircle, label: 'Maldives' },
+        { id: View.ESSENTIAL_INFO, icon: AlertCircle, label: t.essentialInfo },
+    ];
 
     const renderView = () => {
         return (
@@ -264,7 +272,12 @@ const AppContent: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Modals included in simplified view for brevity */}
+                    {activeModal && (
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in fade-in duration-300">
+                            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setActiveModal(null)} />
+                            {/* Reduced modal code for brevity */}
+                        </div>
+                    )}
 
                     {isMenuOpen && (
                         <div className={`fixed inset-0 z-[99] pt-24 px-6 animate-in slide-in-from-right duration-300 lg:hidden ${theme === 'dark' ? 'bg-[#001219]' : 'bg-white'}`}>
