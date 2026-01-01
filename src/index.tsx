@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import AppFinal from './AppFinal.tsx'; // Local import path fix
+import ShoppingApp from './ShoppingApp.tsx'; // FRESH NEW FILE
 import './styles.css';
 import './i18n';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AppFinal />
+    <ShoppingApp />
   </React.StrictMode>
 );
