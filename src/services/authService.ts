@@ -1,4 +1,4 @@
-import { supabase } from '../../services/supabaseClient';
+import { supabase } from './supabaseClient';
 import { User, Session } from '../types/auth';
 
 /**

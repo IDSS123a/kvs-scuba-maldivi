@@ -1,107 +1,72 @@
-import React, { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
 
-/**
- * Loading spinner component with theme support
- */
-const LoadingSpinner: React.FC = () => {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-12 w-12 text-blue-600 dark:text-blue-400 animate-spin" />
-        <p className="text-gray-600 dark:text-gray-400 font-medium">Loading...</p>
-      </div>
-    </div>
-  );
-};
+import React from 'react';
+import { useAuth } from '../contexts/AuthProvider';
+import { Lock } from 'lucide-react';
 
-/**
- * Interface for route component props
- */
-interface RouteComponentProps {
-  element: React.ReactElement;
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requiredRole?: 'admin' | 'user';
+  fallback?: React.ReactNode;
 }
 
-/**
- * ProtectedRoute Component
- * Wraps routes that require authentication
- */
-export const ProtectedRoute: React.FC<RouteComponentProps> = ({ element }) => {
-  const { isLoading, user } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      // Redirect to login if not authenticated
-      window.location.href = '/auth';
-    }
-  }, [isLoading, user]);
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requiredRole = 'user',
+  fallback
+}) => {
+  const { isAuthenticated, isLoading, role, userEmail } = useAuth();
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!user) {
-    return null;
+  if (!isAuthenticated) {
+    return fallback || (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md">
+          <Lock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Access Denied
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Please sign in to access this page
+          </p>
+          <a
+            href="/auth"
+            className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+          >
+            Sign In
+          </a>
+        </div>
+      </div>
+    );
   }
 
-  return element;
+  if (requiredRole === 'admin' && role !== 'admin') {
+    return fallback || (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md">
+          <Lock className="w-12 h-12 mx-auto mb-4 text-red-400" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Admin Access Required
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            Your account ({userEmail}) does not have admin privileges.
+          </p>
+          <p className="text-gray-500 dark:text-gray-500 text-sm">
+            Only authorized administrators can access this section.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
 };
-
-/**
- * AdminRoute Component
- */
-export const AdminRoute: React.FC<RouteComponentProps> = ({ element }) => {
-  const { isLoading, user } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        window.location.href = '/auth';
-      } else if (user.role !== 'admin') {
-        window.location.href = '/';
-      }
-    }
-  }, [isLoading, user]);
-
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
-  if (!user || user.role !== 'admin') {
-    return null;
-  }
-
-  return element;
-};
-
-/**
- * ApprovedRoute Component
- */
-export const ApprovedRoute: React.FC<RouteComponentProps> = ({ element }) => {
-  const { isLoading, user } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        window.location.href = '/auth';
-      } else if (user.role !== 'member' && user.role !== 'admin') {
-        // Redirect if not approved (pending)
-        // Adjust redirection target as needed
-        console.warn('User not approved');
-      }
-    }
-  }, [isLoading, user]);
-
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
-  if (!user || (user.role !== 'member' && user.role !== 'admin')) {
-    return null;
-  }
-
-  return element;
-};
-
-export default ProtectedRoute;

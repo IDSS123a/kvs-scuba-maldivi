@@ -132,9 +132,16 @@ const config: Config = {
         '24': '24px',
       },
       boxShadow: {
-        'glass': '0 8px 32px rgba(31, 38, 135, 0.37)',
+        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.1)',
+        'glass-hover': '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
+        'glass-deep': '0 20px 50px 0 rgba(0, 0, 0, 0.2)',
         'deep': '0 20px 50px rgba(0, 95, 115, 0.2)',
         'deeper': '0 30px 70px rgba(0, 95, 115, 0.35)',
+      },
+      backdropBlur: {
+        'xs': '2px',
+        '2xl': '40px',
+        '3xl': '60px',
       },
       letterSpacing: {
         'widest': '0.2em',
@@ -144,6 +151,7 @@ const config: Config = {
         'slide-in-from-bottom': 'slide-in-from-bottom 0.5s ease-out',
         'fade-in': 'fade-in 0.3s ease-out',
         'zoom-in-95': 'zoom-in-95 0.5s ease-out',
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       keyframes: {
         'slide-in-from-bottom': {

@@ -1,0 +1,43 @@
+// SAMO OVE LINIJE TREBAJU BITI DODANE U App.tsx NA GITHUB-U
+
+// ============================================
+// 1. DODAJ IMPORT (nakon linije 20)
+// ============================================
+import ShoppingCalculator from './components/ShoppingCalculator';
+import { ShoppingCart } from 'lucide-react';
+
+// ============================================
+// 2. DODAJ STATE (nakon linije 77, unutar AppContent komponente)
+// ============================================
+const [isShoppingOpen, setIsShoppingOpen] = useState(false);
+
+// ============================================
+// 3. DODAJ TRANSLATION (unutar translations objekta, BS sekcija, nakon linije 134)
+// ============================================
+shopping: { trigger: 'KUPOVINA' }
+
+// ============================================
+// 4. DODAJ TRANSLATION (unutar translations objekta, EN sekcija, nakon linije 147)
+// ============================================
+shopping: { trigger: 'SHOPPING' }
+
+// ============================================
+// 5. DODAJ JSX (nakon linije 399, prije zatvaranja </div> glavnog layout-a)
+// ============================================
+{/* Shopping Calculator Trigger & Modal */}
+<div className="fixed bottom-40 right-5 z-[1000] flex flex-col items-end">
+    <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsShoppingOpen(true)}
+        className="bg-[#ee9b00] text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border-2 border-white/50 group"
+    >
+        <ShoppingCart className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+        <span className="text-[11px] font-black uppercase tracking-widest">{t.shopping?.trigger || 'KUPOVINA'}</span>
+    </motion.button>
+    <ShoppingCalculator
+        theme={theme}
+        isOpen={isShoppingOpen}
+        onClose={() => setIsShoppingOpen(false)}
+    />
+</div>
